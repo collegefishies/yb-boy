@@ -2,88 +2,111 @@
 #define graph_cpp
 #include "graph.h"
 
-#define BOUNDARY 10
-#define OFFSET 10
-#define NUMXTICS 5
-#define NUMYTICS 5
-#define GRIDSEP	2
+graph::graph(int x0, int y0, int x1, int y1){
+	xi = x0; yi = y0; xf = x1; yf = y1;
+	boundary = 10;
+	numXtics = 5; numYtics = 5;
+	gridSep = 2;
+	xtics = false;
+	ytics = false;
+	ylabel = false;
+	xlabel = false;
 
-graph::graph(int X, int Y){
-	X0 = X;
-	Y0 = Y;
+	traces = new bitArray[1];
+	traces[0] = bitArray(xf-xi, yf-yi);
 }
 
 graph::~graph(){
+	
 }
 
-void graph::makeAxes(bitArray& graph){
+
+void graph::makeAxes(){
 	int x,y;
 
-	int x0 = OFFSET;
-	int y0 = graph.C - 1 - OFFSET;
-	int yftrial = BOUNDARY;
-	int xftrial = graph.R - 1 - BOUNDARY;
-	int yf = y0 + ((yftrial-y0) / NUMYTICS)*NUMYTICS;
-	int xf = x0 + ((xftrial-x0) / NUMXTICS)*NUMXTICS;
+	int X0 = boundary;
+	int Y0 = traces[0].C - 1 - boundary;
+	int yftrial = boundary;
+	int xftrial = traces[0].R - 1 - boundary;
+
+	int XF, YF;
+	if(ytics){
+		YF = Y0 + ((yftrial-Y0) / numYtics)*numYtics;
+	} else {
+		YF = yftrial;
+	}
+
+	if(xtics){
+		XF = X0 + ((xftrial-X0) / numXtics)*numXtics;
+	} else {
+		XF = xftrial;
+	}
 	
 	//construct y axes;
-	for (int y = y0; y >= yf ; --y)
+	for (int y = Y0; y >= YF ; --y)
 	{
-		graph.setBit(x0,y,true);
+		traces[0].setBit(X0,y,true);
 	}
 
 	//construct x axes;
-	for (int x = x0; x <= xf; ++x)
+	for (int x = X0; x <= XF; ++x)
 	{
-		graph.setBit(x,y0,true);
+		traces[0].setBit(x,Y0,true);
 	}
 
-	//construct ytics;
-	x = x0-2;
-	y = y0+2;
-	int dy = (yf-y0)/NUMYTICS;
-	for (int i = 0; i <= NUMYTICS; ++i)
-	{
-		graph.setBit(x,y0 + i*dy, true);
+	if(ytics){
+		//construct ytics;
+		x = X0-2;
+		y = Y0+2;
+		int dy = (YF-Y0)/numYtics;
+		for (int i = 0; i <= numYtics; ++i)
+		{
+			traces[0].setBit(x,Y0 + i*dy, true);
+		}
 	}
 
-	//construct xtics;
-	int dx = (xf-x0)/NUMXTICS;
-	for (int i = 0; i <= NUMXTICS; ++i)
-	{
-		graph.setBit(x0+i*dx,y,true);
+	if(xtics){
+		//construct xtics;
+		int dx = (XF-X0)/numXtics;
+		for (int i = 0; i <= numXtics; ++i)
+		{
+			traces[0].setBit(X0+i*dx,y,true);
+		}
 	}
 }
 
-void graph::makeGrid(bitArray & graph){
+void graph::makeGrid(){
 	//make grid 
 	int x,y;
 
-	int x0 = OFFSET;
-	int y0 = graph.C - 1 - OFFSET;
-	int yftrial = BOUNDARY;
-	int xftrial = graph.R - 1 - BOUNDARY;
-	int yf = y0 + ((yftrial-y0) / NUMYTICS)*NUMYTICS;
-	int xf = x0 + ((xftrial-x0) / NUMXTICS)*NUMXTICS;
-	int dy = (yf-y0)/NUMYTICS;
-	int dx = (xf-x0)/NUMXTICS;
+	int X0 = boundary;
+	int Y0 = traces[0].C - 1 - boundary;
+	int yftrial = boundary;
+	int xftrial = traces[0].R - 1 - boundary;
+	int YF = Y0 + ((yftrial-Y0) / numYtics)*numYtics;
+	int XF = X0 + ((xftrial-X0) / numXtics)*numXtics;
+	int dy = (YF-Y0)/numYtics;
+	int dx = (XF-X0)/numXtics;
 
-	for (int i = 1; i <= NUMXTICS; i++)
-	{
-		for (int j = 0; j >= yf-y0; j -= GRIDSEP)
+	if(xtics){
+		for (int i = 1; i <= numXtics; i++)
 		{
-			graph.setBit(x0+i*dx,y0+j,true);
+			for (int j = 0; j >= YF-Y0; j -= gridSep)
+			{
+				traces[0].setBit(X0+i*dx,Y0+j,true);
+			}
 		}
 	}
 
-	for (int i = 1; i <= NUMYTICS; i++)
-	{
-		for (int j = 0; j <= xf-x0; j += GRIDSEP)
+	if(ytics){
+		for (int i = 1; i <= numYtics; i++)
 		{
-			graph.setBit(x0+j,y0+i*dy,true);
+			for (int j = 0; j <= XF-X0; j += gridSep)
+			{
+				traces[0].setBit(X0+j,Y0+i*dy,true);
+			}
 		}
 	}
-
 	
 }
 
@@ -105,16 +128,16 @@ void graph::plotData(bitArray & graph, float* x, float* y, int len){
 	int yi[len];
 
 
-	int x0 = OFFSET;
-	int y0 = graph.C - 1 - OFFSET;
-	int yftrial = BOUNDARY;
-	int xftrial = graph.R - 1 - BOUNDARY;
-	int yf = y0 + ((yftrial-y0) / NUMYTICS)*NUMYTICS;
-	int xf = x0 + ((xftrial-x0) / NUMXTICS)*NUMXTICS;
+	int X0 = boundary;
+	int Y0 = graph.C - 1 - boundary;
+	int yftrial = boundary;
+	int xftrial = graph.R - 1 - boundary;
+	int YF = Y0 + ((yftrial-Y0) / numYtics)*numYtics;
+	int XF = X0 + ((xftrial-X0) / numXtics)*numXtics;
 	for (int i = 0; i < len; ++i)
 	{
-		xi[i] = round((xf-x0)*(x[i]-xmin)/(xmax-xmin)) + x0;
-		yi[i] = round((yf-y0)*(y[i]-ymin)/(ymax-ymin)) + y0;
+		xi[i] = round((XF-X0)*(x[i]-xmin)/(xmax-xmin)) + X0;
+		yi[i] = round((YF-Y0)*(y[i]-ymin)/(ymax-ymin)) + Y0;
 	}
 
 	for (int i = 0; i < graph.N; ++i)
@@ -128,13 +151,13 @@ void graph::plotData(bitArray & graph, float* x, float* y, int len){
 
 }
 
-void graph::drawGraph(bitArray & graph, int color){
-	for (int x = 0; x < graph.R; ++x)
+void graph::drawGraph(){
+	for (int x = 0; x < traces[0].R; ++x)
 	{
-		for (int y = 0; y < graph.C; ++y)
+		for (int y = 0; y < traces[0].C; ++y)
 		{
-			if(graph(x,y)){
-				lcd.drawPixel(x+X0,y+Y0,color);
+			if(traces[0](x,y)){
+				lcd.drawPixel(x+xi,y+yi,ST7735_GREEN);
 			}
 		}
 	}
@@ -146,9 +169,9 @@ void graph::drawGraph(bitArray& tr1, bitArray& tr2, int color1, int color2){
 		for (int y = 0; y < tr1.C; ++y)
 		{
 			if(tr2(x,y)){
-				lcd.drawPixel(x+X0,y+Y0,color2);
+				lcd.drawPixel(x+xi,y+yi,color2);
 			} else if(tr1(x,y)){
-				lcd.drawPixel(x+X0,y+Y0,color1);
+				lcd.drawPixel(x+xi,y+yi,color1);
 			}
 		}
 	}
@@ -160,11 +183,11 @@ void graph::drawGraph(bitArray& tr1, bitArray& tr2, bitArray& tr3, int color1, i
 		for (int y = 0; y < tr1.C; ++y)
 		{
 			if(tr3(x,y)){
-				lcd.drawPixel(x+X0,y+Y0,color3);
+				lcd.drawPixel(x+xi,y+yi,color3);
 			} else if(tr2(x,y)){
-				lcd.drawPixel(x+X0,y+Y0,color2);
+				lcd.drawPixel(x+xi,y+yi,color2);
 			} else if(tr1(x,y)){
-				lcd.drawPixel(x+X0,y+Y0,color1);
+				lcd.drawPixel(x+xi,y+yi,color1);
 			}
 		}
 	}
@@ -183,7 +206,7 @@ void graph::drawGraph(bitArray* traces, int* colors, int len){
           draw = true;
         }
       }
-      lcd.drawPixel(x + X0, y + Y0,color);
+      lcd.drawPixel(x + xi, y + yi,color);
     }
   }  
 }
