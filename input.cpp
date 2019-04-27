@@ -82,20 +82,28 @@ void wait(String prompt){
 }
 
 void eraseChar(){
-   if(lcd.getCursorX() >= CHARW){
-    lcd.fillRect(lcd.getCursorX()-CHARW,lcd.getCursorY(),CHARW,CHARH,BACKGROUND);
-    lcd.setCursor(lcd.getCursorX()-CHARW,lcd.getCursorY());
-   } else if(lcd.getCursorY() >= CHARH) {
-    int wrapAroundX = (lcd.getCursorX()- CHARW + lcd.width() - (lcd.width() % CHARW) ) % lcd.width();
+  //assumes monospaced font!
+  int16_t x1,y1,x,y;
+  uint16_t charW,charH;
+  x = lcd.getCursorX();
+  y = lcd.getCursorY();
+
+  lcd.getTextBounds(String("x"),x,y, &x1, &y1, &charW, &charH);
+
+  if(x >= charW){
+    lcd.fillRect(x-charW,y,charW,charH,BACKGROUND);
+    lcd.setCursor(x-charW,y);
+   } else if(y >= charH) {
+    int wrapAroundX = (x- charW + lcd.width() - (lcd.width() % charW) ) % lcd.width();
     lcd.fillRect(
       wrapAroundX,
-      lcd.getCursorY() - CHARH,
-      CHARW,CHARH,
+      y - charH,
+      charW,charH,
       BACKGROUND);
       
-    lcd.setCursor(wrapAroundX,lcd.getCursorY()-CHARH);
+    lcd.setCursor(wrapAroundX,y-charH);
    } else {
-    lcd.fillRect(0,0,CHARW,CHARH,BACKGROUND);
+    lcd.fillRect(0,0,charW,charH,BACKGROUND);
     lcd.setCursor(0,0);
    }
 }
