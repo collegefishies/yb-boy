@@ -22,16 +22,44 @@
 
 void printLabel(int x, int y, char* str, int len);
 
+
 void setup() {
 	lcd_initialize();
-  cls();
-  graph test(0,0,lcd.width(),lcd.height());
-  test.setBoundary(1);
-  test.setXtics(3);
-  test.setYtics(5);
-  test.makeAxes();
-  test.makeGrid();
-  test.drawGraph();
+	cls();
+
+	graph test(0,0,lcd.width(),lcd.height());
+	int colors[] = {ST7735_BLUE,ST7735_YELLOW};
+	const int N = 160;
+	float x[N], y[N];
+	
+	for (int i = 0; i < N; ++i)
+	{
+		x[i] = i*10./N + millis()/1000.;
+		y[i] = sin(x[i]);
+	}
+
+	test.setBoundary(1);
+	test.setXtics(10);
+	test.setYtics(3);
+	test.makeAxes();
+	test.makeGrid();
+
+	test.plotData(0,x,y,N);
+	test.drawGraph(colors,2);
+
+	delay(1000);
+
+	while(true){
+
+		for (int i = 0; i < N; ++i)
+		{
+			x[i] = i*10./N + millis()/1000.;
+			y[i] = sin(x[i]);
+		}
+		test.plotData(0,x,y,N);
+		test.drawGraph(colors,2);
+
+	}
 }
 
 
@@ -41,7 +69,7 @@ void loop() {
 
 
 void printLabel(int x, int y, char* str, int len){
-      lcd.setCursor((x+len)*CHARW,y*CHARH);
-      eraseChar(len);
-      lcd.print(str);
+			lcd.setCursor((x+len)*CHARW,y*CHARH);
+			eraseChar(len);
+			lcd.print(str);
 }

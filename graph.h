@@ -15,7 +15,7 @@ private:
 	int boundary, numXtics, numYtics, gridSep;
 
 	//graphing data
-	int numberOfTraces;
+	int numberOfTraces, bookKeepers;
 	int* colors;
 	bitArray* traces;
 
@@ -31,11 +31,9 @@ private:
 		void makeAxes();
 		void makeGrid();
 
-		void plotData(bitArray& graph, float* x, float* y,int len);
+		void plotData(int traceNum, float* x, float* y,int len);
 		void drawGraph();
-		void drawGraph(bitArray & tr1, bitArray & tr2, int color1, int color2);
-		void drawGraph(bitArray &, bitArray &, bitArray &, int color1, int color2, int color3);
-    void drawGraph(bitArray* traces, int* colors, int len);
+		void drawGraph(int* colors, int len);
 
 };
 
