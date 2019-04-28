@@ -180,7 +180,7 @@ bool bitArray::setBit(int index, bool val){
 	if(buff == NULL){
 		return !val;
 	}
-	if(index >= N || index < 0){
+	if(index >= N){
 		return !val;
 	}
 		
@@ -201,10 +201,10 @@ bool bitArray::setBit(int index, bool val){
 }
 
 bool bitArray::setBit(int r, int c, bool val){
-	if (r >= R || r < 0){
+	if (r >= R){
 		return !val;
 	}
-	if (c >= C || c < 0){
+	if (c >= C){
 		return !val;
 	}
 		

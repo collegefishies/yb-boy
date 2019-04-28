@@ -15,6 +15,8 @@ graph::graph(int x0, int y0, int x1, int y1){
 		ytics = false;
 		ylabel = false;
 		xlabel = false;
+		xauto = true;
+		yauto = true;
 
 		traces = new bitArray[bookKeepers];
 		traces[0] = bitArray(xf-xi, yf-yi);
@@ -117,10 +119,14 @@ void graph::makeGrid(){
 
 void graph::plotData(int traceNum, float* x, float* y, int len){
 		//traceNum indexing starts at zero
+
+		//dummy check
 		if(len <= 0){
 			return;
 		}
 
+
+		//allocate more space if needed
 		if(traceNum + 1 > numberOfTraces){
 			//add space for more traces!
 			bitArray* tracesTemp;
@@ -146,19 +152,30 @@ void graph::plotData(int traceNum, float* x, float* y, int len){
 
 		bitArray& graph = traces[traceNum + bookKeepers];
 
-		float xmax=x[0];
-		float xmin=x[0];
-		float ymax=y[0];
-		float ymin=y[0];
 
-		for (int i = 0; i < len; ++i)
-		{
-				xmax = max(xmax,x[i]);
-				xmin = min(xmin,x[i]);
+
+		//auto limit determiner
+		if (xauto) {
+			xmax=x[0];
+			xmin=x[0];
+			for (int i = 0; i < len; ++i)
+			{
+					xmax = max(xmax,x[i]);
+					xmin = min(xmin,x[i]);
+			}
+		} 
+
+		if (yauto) {
+			ymax=y[0];
+			ymin=y[0];
+			for (int i = 0; i < len; ++i)
+			{
 				ymax = max(ymax,y[i]);
 				ymin = min(ymin,y[i]);
+			}
 		}
 
+		//figure out coordinates of data
 		int intX[len];
 		int intY[len];
 
@@ -170,18 +187,27 @@ void graph::plotData(int traceNum, float* x, float* y, int len){
 		int YF = Y0 + ((yftrial-Y0) / numYtics)*numYtics;
 		int XF = X0 + ((xftrial-X0) / numXtics)*numXtics;
 		for (int i = 0; i < len; ++i)
-		{
-				intX[i] = round((XF-X0)*(x[i]-xmin)/(xmax-xmin)) + X0;
-				intY[i] = round((YF-Y0)*(y[i]-ymin)/(ymax-ymin)) + Y0;
+		{		
+		 	if(x[i] > xmin && x[i] < xmax){
+		 		intX[i] = round((XF-X0)*(x[i]-xmin)/(xmax-xmin)) + X0;	
+		 	} else {
+		 		intX[i] = -1;
+		 	}
+		 	
+		 	if(y[i] > ymin && y[i] < ymax){
+		 		intY[i] = round((YF-Y0)*(y[i]-ymin)/(ymax-ymin)) + Y0;
+		 	} else {
+		 		intY[i] = -1;
+		 	}
 		}
 
 		for (int i = 0; i < graph.N; ++i)
 		{
-				graph.setBit(i,false);
+			graph.setBit(i,false);
 		}
 		for (int i = 0; i < len; ++i)
-		{
-				graph.setBit(intX[i],intY[i],true);
+		{	
+		 	graph.setBit(intX[i],intY[i],true);		
 		}
 
 }
