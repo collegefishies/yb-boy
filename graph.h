@@ -11,8 +11,10 @@ private:
 	int xi,yi,xf,yf;
 
 	//graphing options
-	bool xtics,ytics,ylabel,xlabel;
+	bool xtics,ytics,ylabel,xlabel,xauto,yauto;
 	int boundary, numXtics, numYtics, gridSep;
+
+	float xmax,xmin; float ymax, ymin;
 
 	//graphing data
 	int numberOfTraces, bookKeepers;
@@ -25,11 +27,17 @@ private:
 		~graph();
 
 		//graph options
+		void setXauto(){xauto = true;}
+		void setYauto(){yauto = true;}
+		void setAuto(){xauto = yauto = true;}
+		void setXlims(float mini, float maxi){if(xmin < xmax){xauto = false; xmin = mini; xmax = maxi;}}
+		void setYlims(float mini, float maxi){if(ymin < ymax){yauto = false; ymin = mini; ymax = maxi;}}
 		void setXtics(int N){ xtics = N == 0 ? false : true; numXtics = N;}
 		void setYtics(int N){ ytics = N == 0 ? false : true; numYtics = N;}
 		void setBoundary(int N){ boundary = N;}
 		void makeAxes();
 		void makeGrid();
+
 
 		void plotData(int traceNum, float* x, float* y,int len);
 		void drawGraph();

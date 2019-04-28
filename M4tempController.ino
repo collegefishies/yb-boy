@@ -38,11 +38,13 @@ void setup() {
 		y[i] = sin(x[i]);
 	}
 
-	test.setBoundary(1);
+	test.setBoundary(20);
 	test.setXtics(10);
 	test.setYtics(3);
 	test.makeAxes();
 	test.makeGrid();
+	test.setYlims(-3,3);
+	test.setXlims(-1,1);
 
 	test.plotData(0,x,y,N);
 	test.drawGraph(colors,2);
@@ -53,8 +55,8 @@ void setup() {
 
 		for (int i = 0; i < N; ++i)
 		{
-			x[i] = i*10./N + millis()/1000.;
-			y[i] = sin(x[i]);
+			x[i] = i*10./N;
+			y[i] = sin(x[i]+ millis()/1000.);
 		}
 		test.plotData(0,x,y,N);
 		test.drawGraph(colors,2);
