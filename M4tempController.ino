@@ -51,7 +51,7 @@ void setup() {
 	test.plotData(0,x,y,N);
 	test.drawGraph();
 
-	lcd.print("FreeRam:");lcd.println(freeMemory());
+	
 
 	while(true){
 
@@ -75,7 +75,21 @@ void setup() {
 			y[i] = pow(x[i]-5 + 5*sin(millis()/500.),3);
 		}
 		test.plotData(3,x,y,N);
-		
+		for (int i = 0; i < N; ++i)
+		{
+			y[i] = exp(x[i]-5 + 5*sin(millis()/500.));
+		}
+		test.plotData(4,x,y,N);
+		for (int i = 0; i < N; ++i)
+		{
+			y[i] = abs(x[i]-5 + 5*cos(millis()/500.));
+		}
+		test.plotData(5,x,y,N);
+		for (int i = 0; i < N; ++i)
+		{
+			y[i] = (x[i]-5 + 5*cos(millis()/500.));
+		}
+		test.plotData(6,x,y,N);
 		test.drawGraph();
 
 	}
