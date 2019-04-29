@@ -10,7 +10,6 @@ graph::graph(int x0, int y0, int x1, int y1){
 		numberOfTraces = 0;
 
 		//traces[0] is the eraser array, traces[1] is the grid array.
-		bookKeepers = 2;
 		xtics = false;
 		ytics = false;
 		ylabel = false;
@@ -19,11 +18,23 @@ graph::graph(int x0, int y0, int x1, int y1){
 		yauto = true;
 
 		traces = new bitArray[bookKeepers];
-		traces[0] = bitArray(xf-xi, yf-yi);
-		traces[1] = bitArray(xf-xi, yf-yi);
 
-		traces[0].clear();
-		traces[1].clear();
+		for (int i = 0; i < bookKeepers; ++i)
+		{
+			traces[i] = bitArray(xf-xi, yf-yi);
+			traces[i].clear();
+		}
+
+		colors[0] = ST7735_BLACK;
+		colors[1] = ST7735_BLUE;
+		colors[2] = ST7735_YELLOW;
+		colors[3] = ST7735_RED;
+		colors[4] = ST7735_CYAN;
+		colors[5] = ST77XX_MAGENTA;
+		colors[6] = ST7735_ORANGE;
+		colors[7] = 0xA271;	//pink
+		colors[8] = 0x6352; //???
+		colors[9] = 0x6472; //????
 }
 
 graph::~graph(){
@@ -83,6 +94,18 @@ void graph::makeAxes(){
 						traces[1].setBit(X0+i*dx,y,true);
 				}
 		}
+}
+void graph::setColors(int* clrs, int len){
+	len = min(len,10);
+
+	for (int i = 0; i < min(len, numberOfTraces + bookKeepers - 1); ++i)
+	{
+		colors[i + 1] = clrs[i];
+	}
+	for (int i = min(len, numberOfTraces + bookKeepers - 1); i < numberOfTraces + bookKeepers - 1; ++i)
+	{
+		colors[i + 1] = clrs[(i % len)];	//cycle through colors if traces are left.
+	}
 }
 
 void graph::makeGrid(){
@@ -215,62 +238,27 @@ void graph::plotData(int traceNum, float* x, float* y, int len){
 
 }
 
+
 void graph::drawGraph(){
-		for (int x = 0; x < traces[1].R; ++x)
-		{
-				for (int y = 0; y < traces[1].C; ++y)
-				{
-						if(traces[1](x,y)){
-								lcd.drawPixel(x+xi,y+yi,ST7735_GREEN);
-						}
-				}
-		}
-}
-
-
-
-
-void graph::drawGraph(int* colors, int len){
-	if( len <= 0 ){
-		return;
-	}
-
-	int color = BACKGROUND;
 	int draw = false;
-	
-	int bookkeepingColors[numberOfTraces + bookKeepers];
-	bookkeepingColors[0] = BACKGROUND;
-
-	for (int i = 0; i < min(len,numberOfTraces + bookKeepers - 1); ++i)
-	{
-		bookkeepingColors[i+1] = colors[i];
-	}
-
+	int color;
 
 	for (int x = 0; x < xf-xi; ++x)
 	{
 		for (int y = 0; y < yf-yi; ++y)
 		{	
 		 	draw = false;
-
-			for(int i = 0; i < numberOfTraces + bookKeepers; i++){
-				if(traces[i](x,y)){
-					color = bookkeepingColors[i];
-					draw = true;
-				}
-			}
-
-			if(draw){
-				lcd.drawPixel(x + xi, y + yi,color);
-			}
-			
+		 	for(int i = 0; i < numberOfTraces + bookKeepers; i++){
+		 		if(traces[i](x,y)){
+		 			color = colors[i];
+		 			draw = true;
+		 		}
+		 	}
+		 	if(draw){lcd.drawPixel(x + xi, y + yi,color);}
 		}
 	}
 
 	//reset eraserBin.
-	for (int i = 0; i < traces[0].N; ++i)
-	{
-		traces[0].setBit(i,false);
-	}
+	traces[0].clear();
 }
 #endif

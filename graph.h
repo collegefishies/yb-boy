@@ -17,8 +17,9 @@ private:
 	float xmax,xmin; float ymax, ymin;
 
 	//graphing data
-	int numberOfTraces, bookKeepers;
-	int* colors;
+	int numberOfTraces;
+	const int bookKeepers = 2;
+	int colors[10];
 	bitArray* traces;
 
 	public:
@@ -34,6 +35,7 @@ private:
 		void setYlims(float mini, float maxi){if(ymin < ymax){yauto = false; ymin = mini; ymax = maxi;}}
 		void setXtics(int N){ xtics = N == 0 ? false : true; numXtics = N;}
 		void setYtics(int N){ ytics = N == 0 ? false : true; numYtics = N;}
+		void setColors(int* clrs, int len);
 		void setBoundary(int N){ boundary = N;}
 		void makeAxes();
 		void makeGrid();
@@ -41,8 +43,6 @@ private:
 
 		void plotData(int traceNum, float* x, float* y,int len);
 		void drawGraph();
-		void drawGraph(int* colors, int len);
-
 };
 
 

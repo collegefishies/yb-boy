@@ -28,7 +28,6 @@ void setup() {
 	cls();
 
 	graph test(0,0,lcd.width(),lcd.height());
-	int colors[] = {ST7735_BLUE,ST7735_YELLOW};
 	const int N = 160;
 	float x[N], y[N];
 	
@@ -47,7 +46,7 @@ void setup() {
 	// test.setXlims(-1,1);
 
 	// test.plotData(0,x,y,N);
-	test.drawGraph(colors,1);
+	test.drawGraph();
 
 	// delay(1000);
 
