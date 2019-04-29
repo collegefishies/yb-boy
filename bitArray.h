@@ -30,7 +30,8 @@ class bitArray {
     ~bitArray();
     
     
-    bitArray operator+(const bitArray& other) const;
+    const bitArray operator+(const bitArray& other) const;
+    bitArray& operator+=(const bitArray& other);
 
     //accessor
     bool operator()(int index) const;

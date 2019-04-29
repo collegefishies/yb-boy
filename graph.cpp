@@ -175,7 +175,10 @@ void graph::plotData(int traceNum, float* x, float* y, int len){
 			}
 		} else {
 			//set old trace to the eraserBin!
-			traces[0] = traces[traceNum + bookKeepers];
+			// cls();
+			// lcd.setCursor(0,10);
+			// lcd.println("In trash thing:::");
+			traces[0] = traces[0] + traces[traceNum + bookKeepers];
 		}
 
 		// lcd.print("writing to "); lcd.println(traceNum+bookKeepers);

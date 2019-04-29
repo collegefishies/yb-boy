@@ -57,27 +57,39 @@ bitArray::bitArray(int r, int c){
 //copy 
 bitArray::bitArray(const bitArray& cp){
 	// lcd.println("In copy constructor");
+
 	N = cp.N;
 	R = cp.R;
 	C = cp.C;
+	// lcd.println("Bytes not equal.");
+	numberOfBytes = cp.numberOfBytes;	
+	buff = new byte[numberOfBytes];
 
-	if (numberOfBytes != cp.numberOfBytes){
-		numberOfBytes = cp.numberOfBytes;
-		buff = new byte[numberOfBytes];
+	if(buff == NULL){
+		N = 0; R = 0; C = 0; numberOfBytes = 0; lcd.println("bitArray:Failed to Alloc");
+		return;
+	}
 
-		if(buff == NULL){
-			N = 0; R = 0; C = 0; numberOfBytes = 0; lcd.println("bitArray:Failed to Alloc");
-			return;
+	int tx,ty;
+	tx = lcd.getCursorX(); ty = lcd.getCursorY();
+	for(int i = 0; i < numberOfBytes; i++){
+		// lcd.print(".");
+		buff[i] = cp.buff[i];
+		
+	}
+}
+
+
+bitArray& bitArray::operator+=(const bitArray& other){
+	if(numberOfBytes == other.numberOfBytes){
+		for (int i = 0; i < numberOfBytes; ++i)
+		{
+			buff[i] |= other.buff[i];
 		}
 	}
-
-	for(int i = 0; i < numberOfBytes; i++){
-		buff[i] = cp.buff[i];
-	}
-
-
-
+	return *this;
 }
+
 void bitArray::allocate(int r, int c){
 	if(buff != NULL){
 		delete [] buff;	
@@ -109,9 +121,8 @@ bitArray::~bitArray(){
 	
 }
 
-//copy constructor
 bitArray& bitArray::operator=(const bitArray& other){
-	// lcd.println("Copy Constructor Called.");
+	// lcd.println("Assignment Constructor");
 	if(this != &other){
 		// char str[50];
 		// sprintf(str,"A:(N,R,C,Bytes)=(%d,%d,%d,%d)",N,R,C,numberOfBytes);
@@ -149,6 +160,7 @@ bitArray& bitArray::operator=(const bitArray& other){
 
 //move constructor
 bitArray::bitArray(bitArray&& other){
+	// lcd.println("in move constructor");
 	N = other.N;
 	R = other.R;
 	C = other.C;
@@ -163,6 +175,7 @@ bitArray::bitArray(bitArray&& other){
 
 //move assignment constructor
 bitArray& bitArray::operator=(bitArray&& other){
+	// lcd.println("In move assignment constructor");
 	if (this != &other){
 		if (buff != NULL)
 		{
@@ -178,18 +191,18 @@ bitArray& bitArray::operator=(bitArray&& other){
 	return *this;
 }
 
-bitArray bitArray::operator+(const bitArray& other) const {
+const bitArray bitArray::operator+(const bitArray& other) const {
+  // lcd.print("In operator+...");
   bitArray X = *this;
-
   if(numberOfBytes == other.numberOfBytes){
 	  for (int i = 0; i < numberOfBytes; i++){
 	    X.buff[i] = X.buff[i] | other.buff[i];
 	  }
   } else {
-	lcd.println("trying to add unequal bitArrays!");
+	// lcd.println("trying to add unequal bitArrays!");
   }
-
-  return *this;
+  // lcd.println("Done!");
+  return X;
 }
 // accessors
 bool bitArray::operator()(int index) const {
@@ -234,7 +247,7 @@ bool bitArray::setBit(int index, bool val){
 	int pulledByte = buff[arraySpot];
 	int clearedByte = pulledByte - (pulledByte & mask);
 	
-	//int writtenByte = clearedByte + val*mask;
+	// int writtenByte = clearedByte + val*mask;
 	if (val) {
 		buff[arraySpot] = clearedByte + mask;
 	} else {
@@ -275,22 +288,22 @@ void testScrBitArray(){
 	// test 1D array;
 	cls();
 
-	lcd.println("Testing 1D array.");
+	// lcd.println("Testing 1D array.");
 
 	int onedimL = 50;
 	bitArray onedim(onedimL);
 
 	if(onedim.isNull()){
-		lcd.println("Failed to initialize bitArray.");
+		// lcd.println("Failed to initialize bitArray.");
 	}
 
 	lcd.println("Printing all values in bitArray.");
 	for(int i=0; i<onedimL; i++){
-			lcd.print(onedim(i));
+			// lcd.print(onedim(i));
 	}
-	lcd.println();
+	// lcd.println();
 
-	lcd.println("Setting every third to 1.");
+	// lcd.println("Setting every third to 1.");
 	for (int i = 0; i < onedimL; ++i)
 	{
 		if(i % 3 == 0){
@@ -303,44 +316,44 @@ void testScrBitArray(){
 
 	lcd.println("Printing all values in bitArray.");
 	for(int i=0; i<onedimL; i++){
-			lcd.print(onedim(i));
+			// lcd.print(onedim(i));
 	}
-	lcd.println();
+	// lcd.println();
 
 	wait();
 
-	//print diagnostics of onedim
+	// print diagnostic s of onedim
 	cls();
 	lcd.print("Null ptr="); lcd.println(int(NULL));
 	lcd.print("Buff ptr="); lcd.println(int(onedim.buff));
 	lcd.print("N="); lcd.println(onedim.N); 
 	lcd.print("Bytes="); lcd.println(onedim.numberOfBytes);
-	lcd.println("Man'ly setting buff = 0");
+	// lcd.println("Man'ly setting buff = 0");
 	for (int i = 0; i < onedim.numberOfBytes; ++i)
 	{
 		onedim.buff[i] = 0;
 	}
 	lcd.println("Printing all values in bitArray via call");
 	for(int i=0; i<onedimL; i++){
-			lcd.print(onedim(i));
+			// lcd.print(onedim(i));
 	}
-	lcd.println();
+	// lcd.println();
 	lcd.println("Printing integers stored in buff man'ly");
 	for (int i = 0; i < onedim.numberOfBytes; ++i)
 	{
 		lcd.print(onedim.buff[i]); lcd.print(",");
 	}
-	lcd.println();
-	lcd.println();
+	// lcd.println();
+	// lcd.println();
 	wait();
 
 	//testing two dim
 	bitArray twodim(lcd.width(), lcd.height());
 
-	//print diagnostics of twodim
+	// print diagnostics of twodim
 	cls();
 	if(twodim.isNull()){
-		lcd.println("Failed to initialize bitArray.");
+		// lcd.println("Failed to initialize bitArray.");
 	}
 	lcd.print("Null ptr="); lcd.println(int(NULL));
 	lcd.print("Buff ptr="); lcd.println(int(twodim.buff));
@@ -351,7 +364,7 @@ void testScrBitArray(){
 	lcd.print("Bytes="); lcd.println(twodim.numberOfBytes);
 	wait();
 
-	lcd.println("Testing 1D Define");
+	// lcd.println("Testing 1D Define");
 
 	for (int i = 0; i < twodim.N; ++i)
 	{
@@ -375,9 +388,9 @@ void testScrBitArray(){
 	}
 	wait();
 
-	//print test screen
+	// print test screen
 	cls();
-	lcd.println("Defining Screen in 2D way");
+	// lcd.println("Defining Screen in 2D way");
 	for (int x = 0; x < lcd.width(); ++x)
 	{
 		for (int y = 0; y < lcd.height(); ++y)
@@ -387,7 +400,7 @@ void testScrBitArray(){
 	}
 	wait();
 
-	lcd.println("Attempting Screen Draw");
+	// lcd.println("Attempting Screen Draw");
 
 	for (int x = 0; x < lcd.width(); ++x)
 	{

@@ -72,7 +72,7 @@ void setup() {
 		test.plotData(2,x,y,N);
 		for (int i = 0; i < N; ++i)
 		{
-			y[i] = pow(x[i]+ 5*sin(millis()/500.),3);
+			y[i] = pow(x[i]-5 + 5*sin(millis()/500.),3);
 		}
 		test.plotData(3,x,y,N);
 		
