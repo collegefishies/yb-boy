@@ -25,7 +25,8 @@ class bitArray {
     bitArray& operator=(bitArray&& other); //move assignment constructor
     
     void allocate(int r, int c);
-
+    void clear();
+    
     ~bitArray();
     
     

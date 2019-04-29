@@ -8,21 +8,23 @@ bitArray::bitArray(){
 	numberOfBytes = DEFAULTSIZE/(sizeof(byte)*8) + (DEFAULTSIZE % (sizeof(byte)*8) ? 1 : 0);
 	buff = new byte [numberOfBytes];
 	if (buff == NULL){
-		N = 0;
+		N = 0; R = 0; C = 0; numberOfBytes = 0; lcd.println("bitArray:Failed to Alloc");
 		return;
 	}
 	N = DEFAULTSIZE;
 	R = 8;
-	C = 0;
+	C = 1;
 }
 
 bitArray::bitArray(int n){
 	N = n;
+	R = N;
+	C = 1;
 	numberOfBytes = n/(sizeof(byte)*8) + (n % (sizeof(byte)*8) ? 1 : 0);
 	buff = new byte [numberOfBytes];
 	
 	if(buff == NULL){
-		N = 0;
+		N = 0; R = 0; C = 0; numberOfBytes = 0; lcd.println("bitArray:Failed to Alloc");
 		return;
 	}
 
@@ -40,7 +42,7 @@ bitArray::bitArray(int r, int c){
 	numberOfBytes = N/(sizeof(byte)*8) + (N % (sizeof(byte)*8) ? 1 : 0);
 	buff = new byte [numberOfBytes];
 	if(buff == NULL){
-		N = 0;
+		N = 0; R = 0; C = 0; numberOfBytes = 0; lcd.println("bitArray:Failed to Alloc");
 		return;
 	}
 
@@ -57,7 +59,7 @@ bitArray::bitArray(const bitArray& cp){
 	numberOfBytes = cp.numberOfBytes;
 	buff = new byte[numberOfBytes];
 	if(buff == NULL){
-		N = 0;
+		N = 0; R = 0; C = 0; numberOfBytes = 0; lcd.println("bitArray:Failed to Alloc");
 		return;
 	}
 
@@ -82,7 +84,7 @@ void bitArray::allocate(int r, int c){
 	buff = new byte [numberOfBytes];
 
 	if(buff == NULL){
-		N = 0;
+		N = 0; R = 0; C = 0; numberOfBytes = 0; lcd.println("bitArray:Failed to Alloc");
 		return;
 	}
 
@@ -103,9 +105,21 @@ bitArray& bitArray::operator=(const bitArray& other){
 		N = other.N;
 		R = other.R;
 		C = other.C;
-		delete [] buff;
-		buff = new byte[other.N];
-		for (int i = 0; i < N; ++i)
+
+		if (numberOfBytes == other.numberOfBytes){
+			//pass
+		} else {
+			numberOfBytes = other.numberOfBytes;
+			delete [] buff;
+			buff = new byte[numberOfBytes];
+
+			if(buff == NULL){
+				N = 0; R = 0; C = 0; numberOfBytes = 0; lcd.println("bitArray:Failed to Alloc");
+				return *this;
+			}
+		}
+
+		for (int i = 0; i < numberOfBytes; ++i)
 		{
 			buff[i]= other.buff[i];
 		}
@@ -142,10 +156,14 @@ bitArray& bitArray::operator=(bitArray&& other){
 
 bitArray bitArray::operator+(const bitArray& other) const {
   bitArray X = *this;
-  
-  for (int i = 0; i < N; i++){
-    X.setBit(i, this->buff[i] & other.buff[i]);
-  }
+
+  if(numberOfBytes == other.numberOfBytes){
+	  for (int i = 0; i < numberOfBytes; i++){
+	    X.buff[i] = X.buff[i] | other.buff[i];
+	  }
+  };
+
+  return *this;
 }
 // accessors
 bool bitArray::operator()(int index) const {
@@ -218,6 +236,13 @@ bool bitArray::isNull() const{
 		return false;  
 	}
 	
+}
+
+void bitArray::clear(){
+	for (int i = 0; i < numberOfBytes; ++i)
+	{
+		buff[i] = 0;
+	}
 }
 
 void testScrBitArray(){

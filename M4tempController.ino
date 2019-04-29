@@ -18,7 +18,7 @@
 #include "bitArray.h"
 #include "graph.h"
 #include <math.h>
-
+#include "MemoryFree.h"
 
 void printLabel(int x, int y, char* str, int len);
 
@@ -43,25 +43,26 @@ void setup() {
 	test.setYtics(3);
 	test.makeAxes();
 	test.makeGrid();
-	test.setYlims(-3,3);
-	test.setXlims(-1,1);
+	// test.setYlims(-3,3);
+	// test.setXlims(-1,1);
 
-	test.plotData(0,x,y,N);
-	test.drawGraph(colors,2);
+	// test.plotData(0,x,y,N);
+	test.drawGraph(colors,1);
 
-	delay(1000);
+	// delay(1000);
 
-	while(true){
+	// while(true){
 
-		for (int i = 0; i < N; ++i)
-		{
-			x[i] = i*10./N;
-			y[i] = sin(x[i]+ millis()/1000.);
-		}
-		test.plotData(0,x,y,N);
-		test.drawGraph(colors,2);
+	//	for (int i = 0; i < N; ++i)
+	//	{
+	//		x[i] = i*10./N;
+	//		y[i] = sin(x[i]+ millis()/1000.);
+	//	}
+	//	test.plotData(0,x,y,N);
+	//	test.drawGraph(colors,2);
 
-	}
+	// }
+	lcd.print("FreeRam:");lcd.println(freeMemory());
 }
 
 

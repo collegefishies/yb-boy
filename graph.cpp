@@ -21,6 +21,9 @@ graph::graph(int x0, int y0, int x1, int y1){
 		traces = new bitArray[bookKeepers];
 		traces[0] = bitArray(xf-xi, yf-yi);
 		traces[1] = bitArray(xf-xi, yf-yi);
+
+		traces[0].clear();
+		traces[1].clear();
 }
 
 graph::~graph(){
@@ -147,7 +150,7 @@ void graph::plotData(int traceNum, float* x, float* y, int len){
 			numberOfTraces = traceNum + 1;
 		} else {
 			//set old trace to the eraserBin!
-			traces[0] = traces[traceNum + bookKeepers];
+			traces[0] = traces[0] + traces[traceNum + bookKeepers];
 		}
 
 		bitArray& graph = traces[traceNum + bookKeepers];
