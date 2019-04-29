@@ -42,26 +42,44 @@ void setup() {
 	test.setYtics(3);
 	test.makeAxes();
 	test.makeGrid();
-	// test.setYlims(-3,3);
+	test.setYlims(-3,3);
 	// test.setXlims(-1,1);
 
-	// test.plotData(0,x,y,N);
+	
+	// test.drawGraph();
+	delay(1000);
+	test.plotData(0,x,y,N);
 	test.drawGraph();
 
-	// delay(1000);
-
-	// while(true){
-
-	//	for (int i = 0; i < N; ++i)
-	//	{
-	//		x[i] = i*10./N;
-	//		y[i] = sin(x[i]+ millis()/1000.);
-	//	}
-	//	test.plotData(0,x,y,N);
-	//	test.drawGraph(colors,2);
-
-	// }
 	lcd.print("FreeRam:");lcd.println(freeMemory());
+
+	while(true){
+
+		for (int i = 0; i < N; ++i)
+		{
+			y[i] = sin(x[i]+ millis()/1000.);
+		}
+		test.plotData(0,x,y,N);
+		for (int i = 0; i < N; ++i)
+		{
+			y[i] = cos(x[i]+ millis()/1000.);
+		}
+		test.plotData(1,x,y,N);
+		for (int i = 0; i < N; ++i)
+		{
+			y[i] = pow(x[i]-5.,2);
+		}
+		test.plotData(2,x,y,N);
+		for (int i = 0; i < N; ++i)
+		{
+			y[i] = pow(x[i]+ 5*sin(millis()/500.),3);
+		}
+		test.plotData(3,x,y,N);
+		
+		test.drawGraph();
+
+	}
+	
 }
 
 

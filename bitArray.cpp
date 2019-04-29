@@ -3,7 +3,7 @@
 
 #include "bitArray.h"
 
-// constructors
+//default constructor
 bitArray::bitArray(){
 	numberOfBytes = DEFAULTSIZE/(sizeof(byte)*8) + (DEFAULTSIZE % (sizeof(byte)*8) ? 1 : 0);
 	buff = new byte [numberOfBytes];
@@ -16,6 +16,7 @@ bitArray::bitArray(){
 	C = 1;
 }
 
+//1D constructor
 bitArray::bitArray(int n){
 	N = n;
 	R = N;
@@ -35,6 +36,7 @@ bitArray::bitArray(int n){
 
 }
 
+//2D constructor
 bitArray::bitArray(int r, int c){
 	N = r*c;
 	R = r;
@@ -52,15 +54,21 @@ bitArray::bitArray(int r, int c){
 }
 
 
+//copy 
 bitArray::bitArray(const bitArray& cp){
+	// lcd.println("In copy constructor");
 	N = cp.N;
 	R = cp.R;
 	C = cp.C;
-	numberOfBytes = cp.numberOfBytes;
-	buff = new byte[numberOfBytes];
-	if(buff == NULL){
-		N = 0; R = 0; C = 0; numberOfBytes = 0; lcd.println("bitArray:Failed to Alloc");
-		return;
+
+	if (numberOfBytes != cp.numberOfBytes){
+		numberOfBytes = cp.numberOfBytes;
+		buff = new byte[numberOfBytes];
+
+		if(buff == NULL){
+			N = 0; R = 0; C = 0; numberOfBytes = 0; lcd.println("bitArray:Failed to Alloc");
+			return;
+		}
 	}
 
 	for(int i = 0; i < numberOfBytes; i++){
@@ -93,6 +101,7 @@ void bitArray::allocate(int r, int c){
 	}
 }
 
+//destructor
 bitArray::~bitArray(){
 	if(buff != NULL){
 		delete [] buff;	
@@ -100,38 +109,50 @@ bitArray::~bitArray(){
 	
 }
 
+//copy constructor
 bitArray& bitArray::operator=(const bitArray& other){
+	// lcd.println("Copy Constructor Called.");
 	if(this != &other){
-		N = other.N;
-		R = other.R;
-		C = other.C;
-
-		if (numberOfBytes == other.numberOfBytes){
+		// char str[50];
+		// sprintf(str,"A:(N,R,C,Bytes)=(%d,%d,%d,%d)",N,R,C,numberOfBytes);
+		// lcd.println(str);
+		// sprintf(str,"B:(N,R,C,Bytes)=(%d,%d,%d,%d)",other.N,other.R,other.C,other.numberOfBytes);
+		// lcd.println(str); 
+		if (this->numberOfBytes == other.numberOfBytes){
 			//pass
+			// lcd.println("Equal Sized!");
 		} else {
-			numberOfBytes = other.numberOfBytes;
-			delete [] buff;
-			buff = new byte[numberOfBytes];
+			// lcd.println("Differently Sized!");
+			this->numberOfBytes = other.numberOfBytes;
+			delete [] this->buff;
+			this->buff = new byte[numberOfBytes];
 
-			if(buff == NULL){
-				N = 0; R = 0; C = 0; numberOfBytes = 0; lcd.println("bitArray:Failed to Alloc");
+			if(this->buff == NULL){
+				this->N = 0; this->R = 0; this->C = 0; this->numberOfBytes = 0; lcd.println("bitArray:Failed to Alloc");
 				return *this;
 			}
 		}
 
-		for (int i = 0; i < numberOfBytes; ++i)
+		this->N = other.N;
+		this->R = other.R;
+		this->C = other.C;
+
+		// lcd.println("Copying.");
+		for (int i = 0; i < this->numberOfBytes; ++i)
 		{
-			buff[i]= other.buff[i];
+			this->buff[i] = other.buff[i];
 		}
 	}
 
 	return *this;
 }
 
+//move constructor
 bitArray::bitArray(bitArray&& other){
 	N = other.N;
 	R = other.R;
 	C = other.C;
+	numberOfBytes = other.numberOfBytes;
 	buff = other.buff;
 	other.buff = NULL;
 	other.N = 0;
@@ -139,6 +160,8 @@ bitArray::bitArray(bitArray&& other){
 	other.C = 0;
 }
 
+
+//move assignment constructor
 bitArray& bitArray::operator=(bitArray&& other){
 	if (this != &other){
 		if (buff != NULL)
@@ -146,6 +169,7 @@ bitArray& bitArray::operator=(bitArray&& other){
 			delete[] buff;
 		}
 		N = other.N; R = other.R; C = other.C;
+		numberOfBytes = other.numberOfBytes;
 		buff = other.buff;
 		other.buff = NULL;
 		other.N = 0; other.R = 0; other.C = 0;
@@ -161,7 +185,9 @@ bitArray bitArray::operator+(const bitArray& other) const {
 	  for (int i = 0; i < numberOfBytes; i++){
 	    X.buff[i] = X.buff[i] | other.buff[i];
 	  }
-  };
+  } else {
+	lcd.println("trying to add unequal bitArrays!");
+  }
 
   return *this;
 }

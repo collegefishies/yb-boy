@@ -26,7 +26,7 @@ class bitArray {
     
     void allocate(int r, int c);
     void clear();
-    
+
     ~bitArray();
     
     

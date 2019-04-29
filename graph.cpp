@@ -157,27 +157,29 @@ void graph::plotData(int traceNum, float* x, float* y, int len){
 			//add space for more traces!
 			bitArray* tracesTemp;
 			tracesTemp = new bitArray[traceNum + 1 + bookKeepers];
-
-			for (int i = 0; i < numberOfTraces + bookKeepers; ++i)
-			{
-					tracesTemp[i] = traces[i];  
+			if(tracesTemp == NULL){
+				lcd.println("graph:Failed to add trace!");
+			} else {
+				for (int i = 0; i < numberOfTraces + bookKeepers; ++i)
+				{
+					tracesTemp[i] = traces[i];
+				}
+				for (int i = numberOfTraces + bookKeepers; i < traceNum + 1 + bookKeepers; ++i)
+				{
+					tracesTemp[i] = bitArray(xf-xi,yf-yi);
+				}
+				
+				delete[] traces;
+				traces = tracesTemp;
+				numberOfTraces = traceNum + 1;
 			}
-			
-			for (int i = numberOfTraces + bookKeepers; i < traceNum + 1 + bookKeepers; ++i)
-			{
-				tracesTemp[i] = bitArray(xf-xi,yf-yi);
-			}
-
-			delete[] traces;
-			traces = tracesTemp;
-			numberOfTraces = traceNum + 1;
 		} else {
 			//set old trace to the eraserBin!
-			traces[0] = traces[0] + traces[traceNum + bookKeepers];
+			traces[0] = traces[traceNum + bookKeepers];
 		}
 
+		// lcd.print("writing to "); lcd.println(traceNum+bookKeepers);
 		bitArray& graph = traces[traceNum + bookKeepers];
-
 
 
 		//auto limit determiner
@@ -227,10 +229,7 @@ void graph::plotData(int traceNum, float* x, float* y, int len){
 		 	}
 		}
 
-		for (int i = 0; i < graph.N; ++i)
-		{
-			graph.setBit(i,false);
-		}
+		graph.clear();
 		for (int i = 0; i < len; ++i)
 		{	
 		 	graph.setBit(intX[i],intY[i],true);		
