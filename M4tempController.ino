@@ -43,7 +43,7 @@ void setup() {
 	test.makeAxes();
 	test.makeGrid();
 	test.setYlims(-3,3);
-	// test.setXlims(-1,1);
+	test.setXlims(-10,20);
 
 	
 	// test.drawGraph();
