@@ -6,6 +6,17 @@
 #include <math.h>
 
 namespace temperatureController{
+
+/*
+ *  Temperature Controller
+ */
+
+  void PIcontroller::feedback(){
+    error = input - setPoint;
+    integral += dt*error;
+    output = -G*(P*error + I*integral); //note the negative feedback!
+  }
+
   const int averageNumber = 100;
 /*
  * Thermistor Functions
