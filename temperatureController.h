@@ -4,9 +4,9 @@
 #include "lcd.h"
 
 namespace temperatureController {
-	class thermistor;
-	class tec;
-
+	class TemperatureController;
+	class Thermistor;
+	class TEC;
 	class PIcontroller;
 
 	class PIcontroller{
@@ -14,25 +14,27 @@ namespace temperatureController {
 			float G;     	//total gain
 			float P, I;  	//p,i,d gains
 			float output;	//output value
+			float outputOffset;
 			float input;
 			float setpoint;
 			float error;
 			float integral;
 			float dt;
-
+			
 			void init(){G = P = I = output = input = setpoint = error = integral = dt = 0;};
 			void feedback();	//call this loop repeatedly
 	};
 
-	class tec{
+	class TEC{
 	public:
 		unsigned int pin;
 		float VCC;
 		int resolution;
 
-		tec(unsigned int pinn,float voltage,int res){analogWriteResolution(res); pin = pinn; VCC = voltage; resolution = res;};
-		~tec(){};
-
+		void init(){pin = VCC = resolution = 0;}
+		void setResolution(unsigned int res){resolution = res; analogWriteResolution(resolution);}
+		void setMaxVoltage(float V){VCC = V;}
+		void setAnalogPin(unsigned int analogPin){pin = analogPin;}
 		void setVoltage(float V){
 			analogWriteResolution(resolution);
 			float integer = ((1 << resolution) - 1 )*V/VCC;
@@ -45,36 +47,65 @@ namespace temperatureController {
 		}
 	};
 
-	class thermistor{
+	class Thermistor{
 		public:
 			unsigned int pin;
 			float VCC;
 			float resistance; //ohms
 			float roomResistance;
-			float readRate; //number per second
 			float intVal;
 			int resolution;
 			
-		public:
+		public:			
 
-			thermistor(unsigned int analogPin, unsigned int ADC_Resolution);
-
-			
 			//definer functions
-			void setVoltage(float voltage);   //set voltage driving voltage divider.
-			void setResistorDivider(float R); //set value of top resistor for the voltage divider;
-			void setReadRate(float rate);     //set rate of desired update times in number per second;
+			void init(){pin = VCC = resistance = roomResistance = intVal = resolution = 0;}
+			void setResolution(unsigned int res){resolution = res; analogReadResolution(resolution);}
+			void setAnalogPin(unsigned int analogPin){pin = analogPin; update();}
+			void setVoltage(float voltage);  	//set voltage driving voltage divider.
+			void setResistorDivider(float R);	//set value of top resistor for the voltage divider;
+			// void setReadRate(float rate); 	//set rate of desired update times in number per second;
 			void setThermistorValue(float R){roomResistance = R;};
 			
 			//utilities
-			void update();
-			float getVoltage();
-			float getAverageVoltage(int averages, int integrationTime);
-			float getResistance();
-			float getAverageResistance(int averages, int integrationTime);
-			float getAverageTemperature(int averages, int integrationTime);
+			void update();                                                 	//updates intVal with reading of thermistor;
+			float getVoltage();                                            	//
+			float getAverageVoltage(int averages, int integrationTime);    	//
+			float getResistance();                                         	//
+			float getAverageResistance(int averages, int integrationTime); 	//
+			float getAverageTemperature(int averages, int integrationTime);	//
 		 
 	};
+
+	class TemperatureController{
+	public:
+		PIcontroller lockbox;
+		Thermistor thermistor;
+		TEC tec;
+		String backup;
+
+		unsigned int lastLockTime;
+		float feedbackTime;
+		unsigned int averageNumber;
+
+		TemperatureController(){lockbox.init(); tec.init(); thermistor.init(); averageNumber = 100; lastLockTime = millis(); feedbackTime = 0;} 
+		~TemperatureController(){}
+
+		//initializers
+		void setBackupFilename(String name){backup = name;}
+		void setVoltage(float V){tec.setMaxVoltage(V); thermistor.setVoltage(V);}
+		void setResolution(unsigned int res){tec.setResolution(res); thermistor.setResolution(res);}
+
+		//lock loops
+		float lock();
+
+		//ui functions
+		void determineOutputOffset(){
+			lcd.setFont();
+			lcd.println("Determine Output Offset via increasing it until ");
+		}
+	};
+
 }
 
 #endif

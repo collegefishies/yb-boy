@@ -32,9 +32,8 @@ float times[DATAPOINTS] = {0};
 float outputs[DATAPOINTS] = {0};
 
 RTC_Millis rtc;
-temperatureController::thermistor EOM(A3,12);
-temperatureController::PIcontroller eomPI; 
-temperatureController::tec eomTEC(A1, 3.3, 12);
+
+temperatureController::TemperatureController ram;
 
 void printTime();
 void printHeader();
@@ -44,27 +43,24 @@ String settingsItems[SETPROGS]   = {};
 void (*settingsProgs[SETPROGS])()= {};
 
 void setup() {
+	lcd_initialize();
+
 	rtc.begin(DateTime(2019,1,1,12,0,0));
-	
-	lcd_initialize(); 
 	
 	settings.defineTitle("-------PI BOX------");
 	settings.defineMenuItems(settingsItems,SETPROGS);
 	settings.defineMenuProgs(settingsProgs,SETPROGS);
 
-	EOM.setVoltage(3.3); 
-	EOM.setResistorDivider(2.49e3);
-	EOM.setThermistorValue(10e3);
-	analogWriteResolution(12);
+	ram.setVoltage(3.3); 
+	ram.setResolution(12);
 
+	ram.thermistor.setResistorDivider(2.49e3);
+	ram.thermistor.setThermistorValue(10e3);
 }
-
-
-DateTime oldPrintTime;
-DateTime oldScanTime;
 
 unsigned int oldtime;
 
+DateTime oldPrintTime;
 
 void loop() {
 	graph plt(0,3*CHARH,lcd.width(),lcd.height()/2);
@@ -72,22 +68,20 @@ void loop() {
 		
 	cls();
 	printHeader();
+
 	plt.setBoundary(0);
-	// plt.setYlims(2000,10000);
 	plt.setYtics(3);
 	plt.setXauto();
 	plt.makeAxes();
 	plt.makeGrid();
 	tecPlt.setBoundary(10);
 	tecPlt.setYtics(3);
-	// tecPlt.setYlims(0,3.3);
 	tecPlt.makeAxes();
 
-	eomPI.init();
-	eomPI.G       	= 1/10000.;
-	eomPI.P       	= 1;
-	eomPI.I       	= 1;
-	eomPI.setpoint	= 70; 
+	ram.lockbox.G       	= 1/10000.;
+	ram.lockbox.P       	= 1;
+	ram.lockbox.I       	= 1;
+	ram.lockbox.setpoint	= 70; 
 
 	int i = 0;
 	oldtime = millis();
@@ -98,32 +92,8 @@ void loop() {
 			// eraseTime(); printTime();  oldPrintTime = rtc.now();
 		} 
 
+		ram.lock();
 
-		if( (millis() - oldtime)/1000. >= feedbackTime){
-			eomPI.dt = (millis() - oldtime)/1000.;
-			oldtime = millis();
-			//measure
-			EOMtemps[i] = EOM.getAverageTemperature(100,feedbackTime*1000);
-			times[i] = millis()/1000.;
-
-			//feed to PI
-			eomPI.input = EOMtemps[i];
-
-			//feedback
-			eomPI.feedback();
-			outputs[i] = eomPI.output;
-			eomTEC.setVoltage(1.2 + eomPI.output);
-			
-			
-			tecPlt.plotData(0, times, outputs, DATAPOINTS);
-			plt.plotData(0, times, EOMtemps, DATAPOINTS);
-			plt.drawGraph();
-			tecPlt.drawGraph();
-			
-			i = (i + 1) % DATAPOINTS;
-		}
-
-		
 		//access settings menu
 		char key = keypad.getKey();
 		if(key){

@@ -6,15 +6,38 @@
 #include <math.h>
 
 namespace temperatureController{
-
 /*
  *  Temperature Controller
+ */
+
+float TemperatureController::lock(){
+  float averageTemperature;
+  if((millis() - lastLockTime)/1000. >= feedbackTime){
+    lockbox.dt = (millis() - lastLockTime)/1000.;
+    lastLockTime = millis();
+
+    //measure
+    averageTemperature = thermistor.getAverageTemperature(averageNumber,feedbackTime*1000);
+
+    //feed to PI
+    lockbox.input = averageTemperature;
+
+    //feedback
+    lockbox.feedback();
+    tec.setVoltage(lockbox.output);
+
+    return averageTemperature;
+  }
+}
+
+/*
+ *  PI Controller
  */
 
   void PIcontroller::feedback(){
     error = input - setpoint;
     integral += dt*error;
-    output = -G*(P*error + I*integral); //note the negative feedback!
+    output = -G*(P*error + I*integral) + outputOffset; //note the negative feedback!
   }
 
   const int averageNumber = 100;
@@ -22,35 +45,28 @@ namespace temperatureController{
  * Thermistor Functions
  */
 
-//constructors
-  thermistor::thermistor(unsigned int analogPin, unsigned int ADC_Resolution){
-    pin = analogPin;
-    resolution = ADC_Resolution;
-    analogReadResolution(resolution);
-    update();
-  }
   
 //definer functions
   //set voltage driving voltage divider.
-  void thermistor::setVoltage(float voltage){   VCC = voltage;  };
+  void Thermistor::setVoltage(float voltage){   VCC = voltage;  };
   //set value of top resistor for the voltage divider;
-  void thermistor::setResistorDivider(float R){   resistance = R;   }; 
+  void Thermistor::setResistorDivider(float R){   resistance = R;   }; 
   //set rate of desired update times in number per second;
-  void thermistor::setReadRate(float rate){   readRate = rate;    };     
+  // void Thermistor::setReadRate(float rate){   readRate = rate;    };     
 
 //utility functions
-  void thermistor::update(){
+  void Thermistor::update(){
     intVal = analogRead(pin);
   }
 
-  float thermistor::getVoltage(){
+  float Thermistor::getVoltage(){
       float voltage;
       update();
       voltage = (VCC) * intVal / (pow(2,resolution) - 1);
       return voltage;
     }
 
-  float thermistor::getAverageVoltage(int averages, int integrationTime){
+  float Thermistor::getAverageVoltage(int averages, int integrationTime){
     float averagedVoltage = 0;
     for(int i = 0; i < averages; i++){
       averagedVoltage += getVoltage();
@@ -60,7 +76,7 @@ namespace temperatureController{
     return averagedVoltage;
   }
   
-  float thermistor::getResistance(){
+  float Thermistor::getResistance(){
     float measuredResistance;
     float measuredVoltage = getVoltage();
     measuredResistance = resistance*measuredVoltage /(VCC - measuredVoltage);
@@ -72,7 +88,7 @@ namespace temperatureController{
     }
   };
 
-  float thermistor::getAverageResistance(int averages, int integrationTime){
+  float Thermistor::getAverageResistance(int averages, int integrationTime){
     float measuredResistance;
     float measuredVoltage = getAverageVoltage(averages,integrationTime);
     measuredResistance = resistance*measuredVoltage /(VCC - measuredVoltage);
@@ -85,7 +101,7 @@ namespace temperatureController{
 
 };
   
-  float thermistor::getAverageTemperature(int averages, int waitTime){
+  float Thermistor::getAverageTemperature(int averages, int waitTime){
        float averageResistance = getAverageResistance(averages,waitTime);
        float RtR = averageResistance / roomResistance;
        const float T0 = 273.15;
