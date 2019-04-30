@@ -24,7 +24,7 @@ private:
 	bitArray* traces;
 
 	public:
-
+		
 		graph(int xi, int yi, int xf, int yf);
 		~graph();
 

@@ -20,10 +20,10 @@
 #include "temperatureController.h"
 #include <RTClib.h>
 #include <math.h>
-#include "Fonts/Tiny3x3a2pt7b.h"
+// #include "Fonts/Picopixel.h"
 
-#define PROGS 4
-#define SETPROGS 0
+#define PROGS 0
+#define SETPROGS 2
 
 #define DATAPOINTS 100
 
@@ -32,6 +32,7 @@ RTC_Millis rtc;
 menu settings;
 
 temperatureController::thermistor EOM(A2,12);
+graph plt;
 
 float feedbackTime = 1;
 
@@ -39,25 +40,31 @@ float EOMtemps[DATAPOINTS] = {0};
 float FiberErrors[DATAPOINTS] = {0};
 float times[DATAPOINTS] = {0};
 
-String settingsItems[SETPROGS]   = {};
-void (*settingsProgs[SETPROGS])()= {};
 
 void printTime();
+void promptYlims();
+void promptXlims();
 
 float vmax( float* x, int len);
 float vmin( float* x, int len);
 void printLabel(int x, int y, char* str, int len);
+void printHeader();
+
+String settingsItems[SETPROGS]   = {"Change graph X limits", "Change graph Y limits"};
+void (*settingsProgs[SETPROGS])()= {promptXlims, promptYlims};
+
 
 void setup() {
-  rtc.begin(DateTime(2019,1,1,12,0,0));
-	lcd_initialize();
+	rtc.begin(DateTime(2019,1,1,12,0,0));
 	
-	settings.defineTitle("-------Settings------");
+	lcd_initialize(); 
+	
+	settings.defineTitle("-------PI BOX------");
 	settings.defineMenuItems(settingsItems,SETPROGS);
 	settings.defineMenuProgs(settingsProgs,SETPROGS);
 
-  EOM.setVoltage(3.3); 
-  EOM.setResistorDivider(2.49e3);
+	EOM.setVoltage(3.3); 
+	EOM.setResistorDivider(2.49e3);
 }
 
 
@@ -65,94 +72,107 @@ DateTime oldPrintTime;
 DateTime oldScanTime;
 
 void loop() {
-  graph plt(lcd.width()/2,0,lcd.width(),lcd.height()/2); 
-  const int numTraces = 4;
-  
-  cls();
+	plt = graph(0,3*CHARH,lcd.width(),lcd.height()); 
+	const int numTraces = 4;
+	
+	lcd.setFont(&Picopixel);
+	lcd.setFont(&Picopixel);
+	lcd.setFont(&Picopixel);
+	cls();
+	printHeader();
 
-  //lcd.setFont(&Tiny3x3a2pt7b);
-  lcd.setTextColor(ST7735_GREEN);
-  // lcd.println("Clock Laser RAM Control");
-  lcd.setTextColor(ST7735_ORANGE);
-  // lcd.println("Press any key for menu.");
-  lcd.setTextColor(ST7735_WHITE);
+	oldPrintTime = rtc.now();
+	printTime();
+	int i = 0;
 
-  oldPrintTime = rtc.now();
-  printTime();
-  int i = 0;
+	plt.setBoundary(10);
+	plt.setYlims(20,70);
+	plt.setXauto();
 
-  // plt.setXlabels(false);
-  plt.setBoundary(10);
-  plt.setYlims(20,70);
-  plt.setXlabels(false);
+	plt.makeAxes();
+	plt.makeGrid();
+	while(true){
+		
+		if ( (rtc.now() - oldPrintTime).seconds() >= 1){
+			// eraseTime(); printTime();  oldPrintTime = rtc.now();
+		} 
 
-  plt.makeAxes();
-  plt.makeGrid();
-  while(true){
-    
-    if ( (rtc.now() - oldPrintTime).seconds() >= 1){
-      // eraseTime(); printTime();  oldPrintTime = rtc.now();
-    } 
+		if( (rtc.now() - oldScanTime).seconds() >= feedbackTime){
+			oldScanTime = rtc.now();
+			EOMtemps[i] = EOM.getResistance();
+			times[i] = i;
 
-    if( (rtc.now() - oldScanTime).seconds() >= feedbackTime){
-      oldScanTime = rtc.now();
-      EOMtemps[i] = EOM.getResistance();
-      times[i] = i;
+			plt.plotData(0, times, EOMtemps, DATAPOINTS);
+			plt.drawGraph();
+			
+			i = (i + 1) % DATAPOINTS;
+		}
 
-      plt.plotData(0, times, EOMtemps, DATAPOINTS);
-      plt.drawGraph();
-      
-      i = (i + 1) % DATAPOINTS;
-    }
-  }
-	//settings.ui();
+		char key = keypad.getKey();
+
+		if(key){
+			lcd.setFont();
+			settings.ui();
+			cls();
+			printHeader();
+		}
+	}
 }
 
 void printTime(){
-  DateTime now = rtc.now();
+	DateTime now = rtc.now();
 
-  char str[50];
-  sprintf(str,"%02d:%02d:%02d %02d/%02d/%04d",now.hour(),now.minute(),now.second(),now.month(), now.day(), now.year());
-  lcd.print(str);
+	char str[50];
+	sprintf(str,"%02d:%02d:%02d %02d/%02d/%04d",now.hour(),now.minute(),now.second(),now.month(), now.day(), now.year());
+	lcd.print(str);
 }
 
 void eraseTime(){
-  DateTime now = rtc.now();
+	DateTime now = rtc.now();
 
-  char str[20];
-  sprintf(str,"%02d:%02d:%02d %02d/%02d/%04d",now.hour(),now.minute(),now.second(),now.month(), now.day(), now.year());
-  
-  int x,y;
+	char str[20];
+	sprintf(str,"%02d:%02d:%02d %02d/%02d/%04d",now.hour(),now.minute(),now.second(),now.month(), now.day(), now.year());
+	
+	int x,y;
 
-  x = lcd.getCursorX();
-  y = lcd.getCursorY();
+	x = lcd.getCursorX();
+	y = lcd.getCursorY();
 
-  int16_t x1,y1;
-  uint16_t w,h;
+	int16_t x1,y1;
+	uint16_t w,h;
 
-  lcd.getTextBounds(String(str), x, y, &x1, &y1, &w,&h);
-  lcd.fillRect(x1,y1,w,h,BACKGROUND);
-  lcd.setCursor(x1, y1);  
+	lcd.getTextBounds(String(str), x, y, &x1, &y1, &w,&h);
+	lcd.fillRect(x1,y1,w,h,BACKGROUND);
+	lcd.setCursor(x1, y1);  
 }
 
-float vmax( float* x, int len){
-  float sup = x[0];
-  for(int i = 0; i < len; i++){
-    sup = max(sup,x[i]);
-  }
-  return sup;
+void printHeader(){
+	lcd.setCursor(0,0);
+	GFXfont *oldFont = lcd.getFont();
+	lcd.setFont(&Picopixel);
+	lcd.setTextColor(ST7735_GREEN);
+	lcd.println("1157nm Clock Laser Ram Controller");
+	lcd.setTextColor(ST7735_WHITE);
+	lcd.println("Press any key for menu.");
+	lcd.setFont(oldFont);
 }
 
-float vmin( float* x, int len){
-  float sup = x[0];
-  for(int i = 0; i < len; i++){
-    sup = min(sup,x[i]);
-  }
-  return sup;
+void promptXlims(){
+	int xmin, xmax;
+	
+	xmin = numInput("Input x min: ");
+	xmax = numInput("Input x max: ");
+	
+	plt.setXlims(xmin,xmax);	
 }
 
-void printLabel(int x, int y, char* str, int len){
-      lcd.setCursor((x+len)*CHARW,y*CHARH);
-      eraseChar(len);
-      lcd.print(str);
+void promptYlims(){
+	int ymin, ymax;
+	
+	ymin = numInput("Input y min: ");
+	ymax = numInput("Input y max: ");
+	
+	plt.setYlims(ymin,ymax);
+
 }
+
