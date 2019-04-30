@@ -10,10 +10,10 @@ graph::graph(int x0, int y0, int x1, int y1){
 		numberOfTraces = 0;
 
 		//traces[0] is the eraser array, traces[1] is the grid array.
-		xtics = false;
-		ytics = false;
-		ylabel = false;
-		xlabel = false;
+		xtics = true;
+		ytics = true;
+		ylabel = true;
+		xlabel = true;
 		xauto = true;
 		yauto = true;
 
@@ -94,6 +94,95 @@ void graph::makeAxes(){
 						traces[1].setBit(X0+i*dx,y,true);
 				}
 		}
+}
+
+void graph::makeLabels(){
+		int x,y;
+
+		int X0 = boundary;
+		int Y0 = traces[1].C - 1 - boundary;
+		int yftrial = boundary;
+		int xftrial = traces[1].R - 1 - boundary;
+
+		int XF, YF;
+		bool wrap = lcd.getTextWrap();
+		lcd.setTextWrap(false);
+		int Xcursor0, Ycursor0;
+		Xcursor0 = lcd.getCursorX();
+		Ycursor0 = lcd.getCursorY();
+		x = X0;
+		y = Y0+2;
+
+		if(ytics){
+				YF = Y0 + ((yftrial-Y0) / numYtics)*numYtics;
+		} else {
+				YF = yftrial;
+		}
+
+		if(xtics){
+				XF = X0 + ((xftrial-X0) / numXtics)*numXtics;
+		} else {
+				XF = xftrial;
+		}
+
+		GFXfont* initialFont = lcd.getFont();
+		lcd.setFont(&Picopixel);
+
+		if(ytics && ylabel){
+				//construct y labels
+				int16_t x1,y1;
+				uint16_t w,h;
+				String label;
+				int dy = (YF-Y0)/numYtics;
+				for (int i = 0; i <= numYtics; ++i)
+				{
+					int u=0,v=0;
+					//get text size
+					label = String(ymin + i*(ymax-ymin)/numYtics);
+					lcd.getTextBounds(label, u, v, &x1, &y1, &w,&h);
+
+					//shift coords according to size
+					u = xi + x + 1;
+					v = yi + Y0 + i*dy - 1;
+
+					//make sure you can read them.
+					lcd.getTextBounds(label, u, v, &x1, &y1, &w,&h);
+					lcd.fillRect(x1,y1,w,h,lcd.getBackground());
+					lcd.setCursor(u,v);
+					
+					lcd.print(label);
+				}
+		}
+
+		if(xtics && xlabel){
+				int16_t x1,y1;
+				uint16_t w,h;
+				String label;
+
+				//construct x labels;
+				int dx = (XF-X0)/numXtics;
+				for (int i = 0; i <= numXtics; ++i)
+				{
+					//get textsize
+					int u = xi + X0+i*dx;
+					int v = yi + y;
+					label = String(xmin + i*(xmax-xmin)/numXtics);
+					lcd.getTextBounds(label, u, v, &x1, &y1, &w,&h);
+					//shift ccording to size
+					v += h;
+
+
+					lcd.setCursor(u,v);
+					//make sure you can read them
+					lcd.getTextBounds(label, u, v, &x1, &y1, &w,&h);
+					lcd.fillRect(x1,y1,w,h,lcd.getBackground());
+					lcd.print(label);
+				}
+		}
+
+		lcd.setTextWrap(wrap);
+		lcd.setFont(initialFont);
+		lcd.setCursor(Xcursor0, Ycursor0);
 }
 void graph::setColors(int* clrs, int len){
 	len = min(len,10);
@@ -255,6 +344,7 @@ void graph::drawGraph(){
 		}
 	}
 
+	makeLabels();
 	//reset eraserBin.
 	traces[0].clear();
 }

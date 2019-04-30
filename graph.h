@@ -3,6 +3,7 @@
 
 #include "lcd.h"
 #include "bitArray.h"
+#include "Fonts/Picopixel.h"	//in Adafruit GFX library.
 #include <math.h>
 
 class graph {
@@ -35,8 +36,12 @@ private:
 		void setYlims(float mini, float maxi){if(ymin < ymax){yauto = false; ymin = mini; ymax = maxi;}}
 		void setXtics(int N){ xtics = N == 0 ? false : true; numXtics = N;}
 		void setYtics(int N){ ytics = N == 0 ? false : true; numYtics = N;}
+		void setXlabels(bool val){xlabel = val;};
+		void setYlabels(bool val){ylabel = val;};
 		void setColors(int* clrs, int len);
 		void setBoundary(int N){ boundary = N;}
+
+		void makeLabels();
 		void makeAxes();
 		void makeGrid();
 
@@ -44,8 +49,4 @@ private:
 		void plotData(int traceNum, float* x, float* y,int len);
 		void drawGraph();
 };
-
-
-
-
 #endif
