@@ -53,12 +53,18 @@ void graph::makeAxes(){
 		int XF, YF;
 		if(ytics){
 				YF = Y0 + ((yftrial-Y0) / numYtics)*numYtics;
+				int DY;
+				DY = boundary-YF;
+				Y0 += DY; YF += DY;
 		} else {
 				YF = yftrial;
 		}
 
 		if(xtics){
 				XF = X0 + ((xftrial-X0) / numXtics)*numXtics;
+				int DX;
+				DX = traces[1].R - 1 - boundary - XF;
+				X0 += DX; XF += DX;
 		} else {
 				XF = xftrial;
 		}
@@ -113,17 +119,23 @@ void graph::makeLabels(){
 		x = X0;
 		y = Y0+2;
 
+
+
 		if(ytics){
 				YF = Y0 + ((yftrial-Y0) / numYtics)*numYtics;
+				
+				
 		} else {
 				YF = yftrial;
 		}
 
 		if(xtics){
 				XF = X0 + ((xftrial-X0) / numXtics)*numXtics;
+				
 		} else {
 				XF = xftrial;
 		}
+			
 
 		GFXfont* initialFont = lcd.getFont();
 		lcd.setFont(&Picopixel);
@@ -211,7 +223,7 @@ void graph::makeGrid(){
 
 		int DX, DY;
 		DY = boundary-YF;
-		DX = graph.R - 1 - boundary - XF;
+		DX = traces[1].R - 1 - boundary - XF;
 
 		X0 += DX; XF += DX;
 		Y0 += DY; YF += DY;
