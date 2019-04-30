@@ -2,6 +2,7 @@
 #define temperatureController_h
 
 #include "lcd.h"
+#include "expressMem.h"
 
 namespace temperatureController {
 	class TemperatureController;
@@ -88,11 +89,12 @@ namespace temperatureController {
 		float feedbackTime;
 		unsigned int averageNumber;
 
-		TemperatureController(){lockbox.init(); tec.init(); thermistor.init(); averageNumber = 100; lastLockTime = millis(); feedbackTime = 0;} 
+		TemperatureController();
+		TemperatureController(String name); //pass backup name 
 		~TemperatureController(){}
 
 		//initializers
-		void setBackupFilename(String name){backup = name;}
+		// void setBackupFilename(String name){backup = name;}
 		void setVoltage(float V){tec.setMaxVoltage(V); thermistor.setVoltage(V);}
 		void setResolution(unsigned int res){tec.setResolution(res); thermistor.setResolution(res);}
 
