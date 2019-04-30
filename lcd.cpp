@@ -1,6 +1,6 @@
 #include "lcd.h"
 
-Adafruit_ST7735 lcd = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_RST);
+myLCD lcd(TFT_CS, TFT_DC, TFT_RST);
 
 void lcd_initialize(){
   lcd.initR(INITR_BLACKTAB);

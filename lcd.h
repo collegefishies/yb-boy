@@ -18,7 +18,17 @@
 #define SCR_HEIGHT_IN_CHARS 16
 #define BACKGROUND ST7735_BLACK
 
-extern Adafruit_ST7735 lcd;
+
+class myLCD : public Adafruit_ST7735{
+	using Adafruit_ST7735::Adafruit_ST7735;
+	int bg = BACKGROUND;
+public:
+	GFXfont* getFont(){return gfxFont;};
+	void getBackground(){return bg;};
+	void setBackground(int color){bg = color;};
+};
+
+extern myLCD lcd;
 
 void lcd_initialize(); 
 
