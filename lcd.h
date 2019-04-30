@@ -24,8 +24,9 @@ class myLCD : public Adafruit_ST7735{
 	int bg = BACKGROUND;
 public:
 	GFXfont* getFont(){return gfxFont;};
-	void getBackground(){return bg;};
+	int getBackground(){return bg;};
 	void setBackground(int color){bg = color;};
+	bool getTextWrap(){return wrap;};
 };
 
 extern myLCD lcd;
