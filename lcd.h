@@ -27,6 +27,10 @@ public:
 	int getBackground(){return bg;};
 	void setBackground(int color){bg = color;};
 	bool getTextWrap(){return wrap;};
+
+	void colorPrint(String str, int temp_color);
+	void printAt(String str, int x, int y);
+	void fontPrint(String str, GFXfont* temp_font);
 };
 
 extern myLCD lcd;

@@ -65,16 +65,14 @@ DateTime oldPrintTime;
 DateTime oldScanTime;
 
 void loop() {
-  graph plt(lcd.width()/2,0,lcd.width(),lcd.height()/2); 
-  const int numTraces = 4;
-  
+  graph plt(lcd.width()/2,0,lcd.width(),lcd.height()/2);   
   cls();
 
-  //lcd.setFont(&Tiny3x3a2pt7b);
+  lcd.setFont(&Tiny3x3a2pt7b);
   lcd.setTextColor(ST7735_GREEN);
-  // lcd.println("Clock Laser RAM Control");
+  lcd.println("Clock Laser RAM Control");
   lcd.setTextColor(ST7735_ORANGE);
-  // lcd.println("Press any key for menu.");
+  lcd.println("Press any key for menu.");
   lcd.setTextColor(ST7735_WHITE);
 
   oldPrintTime = rtc.now();

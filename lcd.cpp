@@ -2,6 +2,14 @@
 
 myLCD lcd(TFT_CS, TFT_DC, TFT_RST);
 
+void myLCD::colorPrint(String str, int temp_color){
+  int old_color = textcolor;
+  lcd.setTextColor(temp_color);
+  lcd.print(str);
+  lcd.setTextColor(old_color);
+}
+
+
 void lcd_initialize(){
   lcd.initR(INITR_BLACKTAB);
   lcd.setTextWrap(true);
