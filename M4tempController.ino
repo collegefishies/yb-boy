@@ -17,93 +17,142 @@
 
 #include "bitArray.h"
 #include "graph.h"
+#include "temperatureController.h"
+#include <RTClib.h>
 #include <math.h>
-#include "MemoryFree.h"
+#include "Fonts/Tiny3x3a2pt7b.h"
 
+#define PROGS 4
+#define SETPROGS 0
+
+#define DATAPOINTS 100
+
+RTC_Millis rtc;
+
+menu settings;
+
+temperatureController::thermistor EOM(A2,12);
+
+float feedbackTime = 1;
+
+float EOMtemps[DATAPOINTS] = {0};
+float FiberErrors[DATAPOINTS] = {0};
+float times[DATAPOINTS] = {0};
+
+String settingsItems[SETPROGS]   = {};
+void (*settingsProgs[SETPROGS])()= {};
+
+void printTime();
+
+float vmax( float* x, int len);
+float vmin( float* x, int len);
 void printLabel(int x, int y, char* str, int len);
 
-
 void setup() {
+  rtc.begin(DateTime(2019,1,1,12,0,0));
 	lcd_initialize();
-	cls();
-
-	graph test(0,0,lcd.width(),lcd.height());
-	const int N = 160;
-	float x[N], y[N];
 	
-	for (int i = 0; i < N; ++i)
-	{
-		x[i] = i*10./N + millis()/1000.;
-		y[i] = sin(x[i]);
-	}
+	settings.defineTitle("-------Settings------");
+	settings.defineMenuItems(settingsItems,SETPROGS);
+	settings.defineMenuProgs(settingsProgs,SETPROGS);
 
-	test.setBoundary(20);
-	test.setXtics(10);
-	test.setYtics(3);
-	test.makeAxes();
-	test.makeGrid();
-	test.setYlims(-3,3);
-	test.setXlims(-10,20);
-
-	
-	// test.drawGraph();
-	delay(1000);
-	test.plotData(0,x,y,N);
-	test.drawGraph();
-
-	
-
-	while(true){
-
-		for (int i = 0; i < N; ++i)
-		{
-			y[i] = sin(x[i]+ millis()/1000.);
-		}
-		test.plotData(0,x,y,N);
-		for (int i = 0; i < N; ++i)
-		{
-			y[i] = cos(x[i]+ millis()/1000.);
-		}
-		test.plotData(1,x,y,N);
-		for (int i = 0; i < N; ++i)
-		{
-			y[i] = pow(x[i]-5.,2);
-		}
-		test.plotData(2,x,y,N);
-		for (int i = 0; i < N; ++i)
-		{
-			y[i] = pow(x[i]-5 + 5*sin(millis()/500.),3);
-		}
-		test.plotData(3,x,y,N);
-		for (int i = 0; i < N; ++i)
-		{
-			y[i] = exp(x[i]-5 + 5*sin(millis()/500.));
-		}
-		test.plotData(4,x,y,N);
-		for (int i = 0; i < N; ++i)
-		{
-			y[i] = abs(x[i]-5 + 5*cos(millis()/500.));
-		}
-		test.plotData(5,x,y,N);
-		for (int i = 0; i < N; ++i)
-		{
-			y[i] = (x[i]-5 + 5*cos(millis()/500.));
-		}
-		test.plotData(6,x,y,N);
-		test.drawGraph();
-
-	}
-	
+  EOM.setVoltage(3.3); 
+  EOM.setResistorDivider(2.49e3);
 }
 
+
+DateTime oldPrintTime;
+DateTime oldScanTime;
 
 void loop() {
+  graph plt(0,0,lcd.width(),lcd.height()); 
+  const int numTraces = 4;
+  
+  cls();
 
+  //lcd.setFont(&Tiny3x3a2pt7b);
+  lcd.setTextColor(ST7735_GREEN);
+  // lcd.println("Clock Laser RAM Control");
+  lcd.setTextColor(ST7735_ORANGE);
+  // lcd.println("Press any key for menu.");
+  lcd.setTextColor(ST7735_WHITE);
+
+  oldPrintTime = rtc.now();
+  printTime();
+  int i = 0;
+
+  // plt.setXlabels(false);
+  plt.setBoundary(10);
+  plt.setYlims(20,70);
+  // plt.setXlabels(false);
+
+  plt.makeAxes();
+  plt.makeGrid();
+  while(true){
+    
+    if ( (rtc.now() - oldPrintTime).seconds() >= 1){
+      // eraseTime(); printTime();  oldPrintTime = rtc.now();
+    } 
+
+    if( (rtc.now() - oldScanTime).seconds() >= feedbackTime){
+      oldScanTime = rtc.now();
+      EOMtemps[i] = EOM.getResistance();
+      times[i] = i;
+
+      plt.plotData(0, times, EOMtemps, DATAPOINTS);
+      plt.drawGraph();
+      
+      i = (i + 1) % DATAPOINTS;
+    }
+  }
+	//settings.ui();
 }
 
+void printTime(){
+  DateTime now = rtc.now();
+
+  char str[50];
+  sprintf(str,"%02d:%02d:%02d %02d/%02d/%04d",now.hour(),now.minute(),now.second(),now.month(), now.day(), now.year());
+  lcd.print(str);
+}
+
+void eraseTime(){
+  DateTime now = rtc.now();
+
+  char str[20];
+  sprintf(str,"%02d:%02d:%02d %02d/%02d/%04d",now.hour(),now.minute(),now.second(),now.month(), now.day(), now.year());
+  
+  int x,y;
+
+  x = lcd.getCursorX();
+  y = lcd.getCursorY();
+
+  int16_t x1,y1;
+  uint16_t w,h;
+
+  lcd.getTextBounds(String(str), x, y, &x1, &y1, &w,&h);
+  lcd.fillRect(x1,y1,w,h,BACKGROUND);
+  lcd.setCursor(x1, y1);  
+}
+
+float vmax( float* x, int len){
+  float sup = x[0];
+  for(int i = 0; i < len; i++){
+    sup = max(sup,x[i]);
+  }
+  return sup;
+}
+
+float vmin( float* x, int len){
+  float sup = x[0];
+  for(int i = 0; i < len; i++){
+    sup = min(sup,x[i]);
+  }
+  return sup;
+}
 
 void printLabel(int x, int y, char* str, int len){
-			lcd.setCursor((x+len)*CHARW,y*CHARH);
-			eraseChar(len);
-			lcd.print(str);
+      lcd.setCursor((x+len)*CHARW,y*CHARH);
+      eraseChar(len);
+      lcd.print(str);
 }
