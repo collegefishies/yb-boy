@@ -35,9 +35,9 @@ namespace temperatureController {
 
 		void setVoltage(float V){
 			analogWriteResolution(resolution);
-			float integer = ((1 << resolution) - 1.)*V/VCC;
-			if ( (V >= 0.)){
-				int set = min(int(round(integer)), 1 << resolution);
+			float integer = ((1 << resolution) - 1 )*V/VCC;
+			if ( (V >= 0)){
+				int set = min(int(round(integer)), (1 << resolution) - 1);
 				analogWrite(pin, set);
 			} else {
 				analogWrite(pin, 0);

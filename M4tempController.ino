@@ -74,15 +74,17 @@ void loop() {
 	printHeader();
 	plt.setBoundary(0);
 	// plt.setYlims(2000,10000);
+	plt.setYtics(3);
 	plt.setXauto();
 	plt.makeAxes();
 	plt.makeGrid();
 	tecPlt.setBoundary(10);
-	tecPlt.setYlims(0,3.3);
+	tecPlt.setYtics(3);
+	// tecPlt.setYlims(0,3.3);
 	tecPlt.makeAxes();
 
 	eomPI.init();
-	eomPI.G       	= 1/100.;
+	eomPI.G       	= 1/10000.;
 	eomPI.P       	= 1;
 	eomPI.I       	= 1;
 	eomPI.setpoint	= 70; 
@@ -110,7 +112,7 @@ void loop() {
 			//feedback
 			eomPI.feedback();
 			outputs[i] = eomPI.output;
-			eomTEC.setVoltage(eomPI.output);
+			eomTEC.setVoltage(1.2 + eomPI.output);
 			
 			
 			tecPlt.plotData(0, times, outputs, DATAPOINTS);
