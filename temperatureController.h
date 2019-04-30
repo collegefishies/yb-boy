@@ -1,8 +1,11 @@
 #ifndef temperatureController_h
 #define temperatureController_h
 
+#include "lcd.h"
+
 namespace temperatureController {
 	class thermistor;
+	class tec;
 
 	class PIcontroller;
 
@@ -17,10 +20,29 @@ namespace temperatureController {
 			float integral;
 			float dt;
 
-			PIcontroller(){G = P = I = output = input = setpoint = error = integral = dt = 0;};
-			~PIcontroller(){};
-
+			void init(){G = P = I = output = input = setpoint = error = integral = dt = 0;};
 			void feedback();	//call this loop repeatedly
+	};
+
+	class tec{
+	public:
+		unsigned int pin;
+		float VCC;
+		int resolution;
+
+		tec(unsigned int pinn,float voltage,int res){analogWriteResolution(res); pin = pinn; VCC = voltage; resolution = res;};
+		~tec(){};
+
+		void setVoltage(float V){
+			analogWriteResolution(resolution);
+			float integer = ((1 << resolution) - 1 )*V/VCC;
+			if ( (V >= 0)){
+				int set = min(int(round(integer)), 1 << resolution);
+				analogWrite(pin, set);
+			} else {
+				analogWrite(pin, 0);
+			}
+		}
 	};
 
 	class thermistor{
@@ -47,10 +69,10 @@ namespace temperatureController {
 			//utilities
 			void update();
 			float getVoltage();
-			float getAverageVoltage(int averages, int waitTime);
+			float getAverageVoltage(int averages, int integrationTime);
 			float getResistance();
-			float getAverageResistance(int averages, int waitTime);
-			float getAverageTemperature(int averages, int waitTime);
+			float getAverageResistance(int averages, int integrationTime);
+			float getAverageTemperature(int averages, int integrationTime);
 		 
 	};
 }

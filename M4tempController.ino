@@ -23,7 +23,7 @@
 
 #define SETPROGS 0
 
-#define DATAPOINTS 100
+#define DATAPOINTS 500
 
 float feedbackTime = 1;
 float EOMtemps[DATAPOINTS] = {0};
@@ -32,8 +32,9 @@ float times[DATAPOINTS] = {0};
 float outputs[DATAPOINTS] = {0};
 
 RTC_Millis rtc;
-temperatureController::thermistor EOM(A2,12);
+temperatureController::thermistor EOM(A3,12);
 temperatureController::PIcontroller eomPI; 
+temperatureController::tec eomTEC(A1, 3.3, 12);
 
 void printTime();
 void printHeader();
@@ -53,6 +54,8 @@ void setup() {
 
 	EOM.setVoltage(3.3); 
 	EOM.setResistorDivider(2.49e3);
+	EOM.setThermistorValue(10e3);
+	analogWriteResolution(12);
 
 }
 
@@ -64,20 +67,25 @@ unsigned int oldtime;
 
 
 void loop() {
-	graph plt(0,3*CHARH,lcd.width(),lcd.height());
+	graph plt(0,3*CHARH,lcd.width(),lcd.height()/2);
+	graph tecPlt(0,2*CHARH + lcd.height()/2, lcd.width(), lcd.height());
 		
 	cls();
 	printHeader();
-	plt.setBoundary(10);
-	plt.setYlims(20,70);
+	plt.setBoundary(0);
+	// plt.setYlims(2000,10000);
 	plt.setXauto();
 	plt.makeAxes();
 	plt.makeGrid();
+	tecPlt.setBoundary(10);
+	tecPlt.setYlims(0,3.3);
+	tecPlt.makeAxes();
 
-	eomPI.G       	= 1;
+	eomPI.init();
+	eomPI.G       	= 1/100.;
 	eomPI.P       	= 1;
 	eomPI.I       	= 1;
-	eomPI.setpoint	= 50; 
+	eomPI.setpoint	= 70; 
 
 	int i = 0;
 	oldtime = millis();
@@ -85,13 +93,15 @@ void loop() {
 		
 		//print time every second
 		if ( (rtc.now() - oldPrintTime).seconds() >= 1){
-			eraseTime(); printTime();  oldPrintTime = rtc.now();
+			// eraseTime(); printTime();  oldPrintTime = rtc.now();
 		} 
 
 
 		if( (millis() - oldtime)/1000. >= feedbackTime){
+			eomPI.dt = (millis() - oldtime)/1000.;
+			oldtime = millis();
 			//measure
-			EOMtemps[i] = EOM.getResistance();
+			EOMtemps[i] = EOM.getAverageTemperature(100,feedbackTime*1000);
 			times[i] = millis()/1000.;
 
 			//feed to PI
@@ -100,10 +110,13 @@ void loop() {
 			//feedback
 			eomPI.feedback();
 			outputs[i] = eomPI.output;
+			eomTEC.setVoltage(eomPI.output);
 			
+			
+			tecPlt.plotData(0, times, outputs, DATAPOINTS);
 			plt.plotData(0, times, EOMtemps, DATAPOINTS);
-			plt.plotData(1, times, outputs, DATAPOINTS);
 			plt.drawGraph();
+			tecPlt.drawGraph();
 			
 			i = (i + 1) % DATAPOINTS;
 		}

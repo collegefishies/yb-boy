@@ -50,11 +50,11 @@ namespace temperatureController{
       return voltage;
     }
 
-  float thermistor::getAverageVoltage(int averages, int waitTime){
+  float thermistor::getAverageVoltage(int averages, int integrationTime){
     float averagedVoltage = 0;
     for(int i = 0; i < averages; i++){
       averagedVoltage += getVoltage();
-      delay(waitTime);
+      delay(integrationTime/averages);
     }
     averagedVoltage = averagedVoltage/averages;
     return averagedVoltage;
@@ -72,9 +72,9 @@ namespace temperatureController{
     }
   };
 
-  float thermistor::getAverageResistance(int averages, int waitTime){
+  float thermistor::getAverageResistance(int averages, int integrationTime){
     float measuredResistance;
-    float measuredVoltage = getAverageVoltage(averages,waitTime);
+    float measuredVoltage = getAverageVoltage(averages,integrationTime);
     measuredResistance = resistance*measuredVoltage /(VCC - measuredVoltage);
 
     if (measuredResistance < 100*resistance){
@@ -88,19 +88,23 @@ namespace temperatureController{
   float thermistor::getAverageTemperature(int averages, int waitTime){
        float averageResistance = getAverageResistance(averages,waitTime);
        float RtR = averageResistance / roomResistance;
+       const float T0 = 273.15;
+
        if (averageResistance > 100*resistance){
         return -1;
        }
-       float T,a,b,c,d;
+
+       float T;
        
-       a = 3.3530481e-3;
-       b = 2.5420230e-4;
-       c = 1.1431163e-6;
-       d = -6.9383563e-8;
+       const float a = 3.3530481e-3;
+       const float b = 2.5420230e-4;
+       const float c = 1.1431163e-6;
+       const float d = -6.9383563e-8;
 
        float logRtR = log(RtR);
+
        T = 1/(a + b*logRtR+ c*pow(logRtR,2) + d*pow(logRtR,3));
-       return T;
+       return T-T0;
   };
 }
 
