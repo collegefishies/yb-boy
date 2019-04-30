@@ -65,7 +65,7 @@ DateTime oldPrintTime;
 DateTime oldScanTime;
 
 void loop() {
-  graph plt(0,0,lcd.width(),lcd.height()); 
+  graph plt(lcd.width()/2,0,lcd.width(),lcd.height()/2); 
   const int numTraces = 4;
   
   cls();
@@ -84,7 +84,7 @@ void loop() {
   // plt.setXlabels(false);
   plt.setBoundary(10);
   plt.setYlims(20,70);
-  // plt.setXlabels(false);
+  plt.setXlabels(false);
 
   plt.makeAxes();
   plt.makeGrid();

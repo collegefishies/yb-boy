@@ -154,7 +154,7 @@ void graph::makeLabels(){
 					lcd.getTextBounds(label, u, v, &x1, &y1, &w,&h);
 
 					//shift coords according to size
-					u = xi + x + 1;
+					u = xi;
 					v = yi + Y0 + i*dy - 1;
 
 					//make sure you can read them.
@@ -181,8 +181,7 @@ void graph::makeLabels(){
 					label = String(xmin + i*(xmax-xmin)/numXtics);
 					lcd.getTextBounds(label, u, v, &x1, &y1, &w,&h);
 					//shift ccording to size
-					v += h;
-
+					v = yf - h;
 
 					lcd.setCursor(u,v);
 					//make sure you can read them
@@ -320,6 +319,14 @@ void graph::plotData(int traceNum, float* x, float* y, int len){
 		int xftrial = graph.R - 1 - boundary;
 		int YF = Y0 + ((yftrial-Y0) / numYtics)*numYtics;
 		int XF = X0 + ((xftrial-X0) / numXtics)*numXtics;
+
+		int DX, DY;
+		DY = boundary-YF;
+		DX = graph.R - 1 - boundary - XF;
+
+		X0 += DX; XF += DX;
+		Y0 += DY; YF += DY;
+
 		for (int i = 0; i < len; ++i)
 		{		
 		 	if(x[i] > xmin && x[i] < xmax){
