@@ -20,39 +20,27 @@
 #include "temperatureController.h"
 #include <RTClib.h>
 #include <math.h>
-// #include "Fonts/Picopixel.h"
 
-#define PROGS 0
-#define SETPROGS 2
+#define SETPROGS 0
 
 #define DATAPOINTS 100
 
-RTC_Millis rtc;
-
-menu settings;
-
-temperatureController::thermistor EOM(A2,12);
-graph plt;
-
 float feedbackTime = 1;
-
 float EOMtemps[DATAPOINTS] = {0};
 float FiberErrors[DATAPOINTS] = {0};
 float times[DATAPOINTS] = {0};
+float outputs[DATAPOINTS] = {0};
 
+RTC_Millis rtc;
+temperatureController::thermistor EOM(A2,12);
+temperatureController::PIcontroller eomPI; 
 
 void printTime();
-void promptYlims();
-void promptXlims();
-
-float vmax( float* x, int len);
-float vmin( float* x, int len);
-void printLabel(int x, int y, char* str, int len);
 void printHeader();
 
-String settingsItems[SETPROGS]   = {"Change graph X limits", "Change graph Y limits"};
-void (*settingsProgs[SETPROGS])()= {promptXlims, promptYlims};
-
+menu settings;
+String settingsItems[SETPROGS]   = {};
+void (*settingsProgs[SETPROGS])()= {};
 
 void setup() {
 	rtc.begin(DateTime(2019,1,1,12,0,0));
@@ -65,51 +53,64 @@ void setup() {
 
 	EOM.setVoltage(3.3); 
 	EOM.setResistorDivider(2.49e3);
+
 }
 
 
 DateTime oldPrintTime;
 DateTime oldScanTime;
 
+unsigned int oldtime;
+
+
 void loop() {
-	plt = graph(0,3*CHARH,lcd.width(),lcd.height()); 
-	const int numTraces = 4;
-	
-	lcd.setFont(&Picopixel);
-	lcd.setFont(&Picopixel);
-	lcd.setFont(&Picopixel);
+	graph plt(0,3*CHARH,lcd.width(),lcd.height());
+		
 	cls();
 	printHeader();
-
-	oldPrintTime = rtc.now();
-	printTime();
-	int i = 0;
-
 	plt.setBoundary(10);
 	plt.setYlims(20,70);
 	plt.setXauto();
-
 	plt.makeAxes();
 	plt.makeGrid();
+
+	eomPI.G       	= 1;
+	eomPI.P       	= 1;
+	eomPI.I       	= 1;
+	eomPI.setpoint	= 50; 
+
+	int i = 0;
+	oldtime = millis();
 	while(true){
 		
+		//print time every second
 		if ( (rtc.now() - oldPrintTime).seconds() >= 1){
-			// eraseTime(); printTime();  oldPrintTime = rtc.now();
+			eraseTime(); printTime();  oldPrintTime = rtc.now();
 		} 
 
-		if( (rtc.now() - oldScanTime).seconds() >= feedbackTime){
-			oldScanTime = rtc.now();
-			EOMtemps[i] = EOM.getResistance();
-			times[i] = i;
 
+		if( (millis() - oldtime)/1000. >= feedbackTime){
+			//measure
+			EOMtemps[i] = EOM.getResistance();
+			times[i] = millis()/1000.;
+
+			//feed to PI
+			eomPI.input = EOMtemps[i];
+
+			//feedback
+			eomPI.feedback();
+			outputs[i] = eomPI.output;
+			
 			plt.plotData(0, times, EOMtemps, DATAPOINTS);
+			plt.plotData(1, times, outputs, DATAPOINTS);
 			plt.drawGraph();
 			
 			i = (i + 1) % DATAPOINTS;
 		}
 
+		
+		//access settings menu
 		char key = keypad.getKey();
-
 		if(key){
 			lcd.setFont();
 			settings.ui();
@@ -157,22 +158,5 @@ void printHeader(){
 	lcd.setFont(oldFont);
 }
 
-void promptXlims(){
-	int xmin, xmax;
-	
-	xmin = numInput("Input x min: ");
-	xmax = numInput("Input x max: ");
-	
-	plt.setXlims(xmin,xmax);	
-}
 
-void promptYlims(){
-	int ymin, ymax;
-	
-	ymin = numInput("Input y min: ");
-	ymax = numInput("Input y max: ");
-	
-	plt.setYlims(ymin,ymax);
-
-}
 

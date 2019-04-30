@@ -12,10 +12,13 @@ namespace temperatureController {
 			float P, I;  	//p,i,d gains
 			float output;	//output value
 			float input;
-			float setPoint;
+			float setpoint;
 			float error;
 			float integral;
 			float dt;
+
+			PIcontroller(){G = P = I = output = input = setpoint = error = integral = dt = 0;};
+			~PIcontroller(){};
 
 			void feedback();	//call this loop repeatedly
 	};

@@ -12,7 +12,7 @@ namespace temperatureController{
  */
 
   void PIcontroller::feedback(){
-    error = input - setPoint;
+    error = input - setpoint;
     integral += dt*error;
     output = -G*(P*error + I*integral); //note the negative feedback!
   }
