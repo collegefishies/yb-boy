@@ -2,6 +2,7 @@
 #define temperatureController_h
 
 #include "lcd.h"
+#include <ArduinoJson.h>
 #include "expressMem.h"
 
 namespace temperatureController {
@@ -106,6 +107,9 @@ namespace temperatureController {
 			lcd.setFont();
 			lcd.println("Determine Output Offset via increasing it until ");
 		}
+
+		void saveConfig(String fname);
+		void loadConfig(String fname);
 	};
 
 }

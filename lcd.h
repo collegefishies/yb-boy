@@ -8,6 +8,7 @@
 //pinout
 #define TFT_CS 0
 #define TFT_DC 4
+#define SD_CS  5
 #define TFT_RST -1
 
 // LCD Global Variables

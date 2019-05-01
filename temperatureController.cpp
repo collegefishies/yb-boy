@@ -2,6 +2,7 @@
 #define temperatureController_cpp
 
 #include <Arduino.h>
+
 #include "temperatureController.h"
 #include <math.h>
 
@@ -9,6 +10,7 @@ namespace temperatureController{
 /*
  *  Temperature Controller
  */
+
 TemperatureController::TemperatureController(){
 	lockbox.init(); tec.init(); thermistor.init(); 
 	averageNumber = 100; lastLockTime = millis(); feedbackTime = 0;
@@ -16,19 +18,7 @@ TemperatureController::TemperatureController(){
 
 TemperatureController::TemperatureController(String name){
 	backup = name;
-	#ifdef expressMem_h
-		bool fsInitialized = false;
-		bool flashInitialized = flash.begin(FLASH_TYPE);
-		if (flashInitialized){
-			fsInitialized = fatfs.begin();
-			if(fsInitialized){
-				
-			}
-		}
 
-	#else
-		//use sd card?
-	#endif
 }
 
 float TemperatureController::lock(){
@@ -51,6 +41,49 @@ float TemperatureController::lock(){
 	}
 }
 
+void TemperatureController::saveConfig(String fname){
+	String fullFname = String("/backups/") + fname + String(".bak");
+	
+	#ifdef expressMem_h
+		bool fsInitialized = false;
+		bool flashInitialized = flash.begin(FLASH_TYPE);
+		if (flashInitialized){
+			fsInitialized = fatfs.begin();
+			if(fsInitialized){
+				Adafruit_SPIFlash_FAT::File iofile = fatfs.open(fullFname, FILE_WRITE);
+			} else {
+				lcd.println("FatFS failed to initialize!");
+				return;
+			}
+		} else {
+			lcd.println("Flash failed to initialize!");
+			return;
+		}
+	#else
+		if(!SD.begin(SD_CS)){
+			lcd.println("SD failed to initialize!");
+			return;
+		}
+
+		File iofile = SD.open(fullFname, FILE_WRITE);
+	#endif
+
+		StaticJsonDocument<512> doc;
+
+		doc["G"]           	= lockbox.G;
+		doc["I"]           	= lockbox.I;
+		doc["P"]           	= lockbox.P;
+		doc["outputOffset"]	= lockbox.outputOffset;
+		doc["setpoint"]    	= lockbox.setpoint;
+		doc["integral"]    	= lockbox.integral;
+
+		if(serializeJson(doc,file) == 0){
+			lcd.println("Failed to write file.");
+		}
+
+		file.close();
+
+}
 /*
  *  PI Controller
  */
