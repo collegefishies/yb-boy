@@ -124,6 +124,10 @@ bool TemperatureController::saveConfig(String fname){
 				return false;
 			}
 		}
+
+		if(!fatfs.exists(fullFname)){
+			fatfs.remove(fullFname);
+		}
 	#else
 		if(!SD.begin(SD_CS)){
 			lcd.println("SD failed to initialize!");
@@ -135,6 +139,10 @@ bool TemperatureController::saveConfig(String fname){
 				lcd.println("Failed to make directory");
 				return false;
 			}
+		}
+
+		if(!SD.exists(fullFname)){
+			SD.remove(fullFname);
 		}
 
 		File iofile = SD.open(fullFname, FILE_WRITE);
