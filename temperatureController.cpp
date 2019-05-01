@@ -1,9 +1,8 @@
 #ifndef temperatureController_cpp
 #define temperatureController_cpp
 
-#include <Arduino.h>
-
 #include "temperatureController.h"
+#include <Arduino.h>
 #include <math.h>
 
 namespace temperatureController{
@@ -45,12 +44,13 @@ void TemperatureController::saveConfig(String fname){
 	String fullFname = String("/backups/") + fname + String(".bak");
 	
 	#ifdef expressMem_h
+		Adafruit_SPIFlash_FAT::File iofile;
 		bool fsInitialized = false;
 		bool flashInitialized = flash.begin(FLASH_TYPE);
 		if (flashInitialized){
 			fsInitialized = fatfs.begin();
 			if(fsInitialized){
-				Adafruit_SPIFlash_FAT::File iofile = fatfs.open(fullFname, FILE_WRITE);
+				iofile = fatfs.open(fullFname, FILE_WRITE);
 			} else {
 				lcd.println("FatFS failed to initialize!");
 				return;
@@ -77,11 +77,11 @@ void TemperatureController::saveConfig(String fname){
 		doc["setpoint"]    	= lockbox.setpoint;
 		doc["integral"]    	= lockbox.integral;
 
-		if(serializeJson(doc,file) == 0){
+		if(serializeJson(doc,iofile) == 0){
 			lcd.println("Failed to write file.");
 		}
 
-		file.close();
+		iofile.close();
 
 }
 /*
