@@ -83,6 +83,8 @@ void loop() {
 	ram.lockbox.I       	= 1;
 	ram.lockbox.setpoint	= 70; 
 
+	// ram.saveConfig("test");
+
 	int i = 0;
 	oldtime = millis();
 	while(true){

@@ -3,7 +3,8 @@
 
 #include "lcd.h"
 #include <ArduinoJson.h>
-#include "expressMem.h"
+#include <SD.h>
+// #include "expressMem.h"
 
 namespace temperatureController {
 	class TemperatureController;

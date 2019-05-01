@@ -41,7 +41,8 @@ float TemperatureController::lock(){
 }
 
 void TemperatureController::saveConfig(String fname){
-	String fullFname = String("/backups/") + fname + String(".bak");
+	String dirName = String("/backups/");
+	String fullFname = dirName + fname + String(".bak");
 	
 	#ifdef expressMem_h
 		Adafruit_SPIFlash_FAT::File iofile;
@@ -65,8 +66,13 @@ void TemperatureController::saveConfig(String fname){
 			return;
 		}
 
+		if(!SD.exists(dirName)){
+			SD.mkdir(dirName);
+		}
+
 		File iofile = SD.open(fullFname, FILE_WRITE);
 	#endif
+
 
 		StaticJsonDocument<512> doc;
 
