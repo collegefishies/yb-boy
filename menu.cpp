@@ -53,10 +53,12 @@ void menu::ui(){
         next();
         printMenu();
         break;
-      case '5':
+      case '#':
         cls(); 
         (menuProgs[index])();
-        printMenu();
+        if(loop){
+          printMenu();
+        }
         break;
       case '4':
         return;
@@ -76,6 +78,7 @@ menu::menu() {
 
   lcd.setTextColor(defaultColor);
   title = "=======Main Menu=======";
+  loop = true;
 }
 
 /*
@@ -132,7 +135,7 @@ void menu::printMenu() {
 
   //print useful info
   lcd.setCursor(0, CHARH*(SCR_HEIGHT_IN_CHARS-1));
-  lcd.print("2:UP,8:DWN,5:SEL,4:BACK");
+  lcd.print("2:UP,8:DWN,#:SEL,4:BACK");
 }
 
 void menu::next(){

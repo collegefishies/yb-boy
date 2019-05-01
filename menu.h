@@ -14,6 +14,7 @@ class menu{
     String title;
 
   public:
+    bool loop;
     int color;
     int defaultColor;
     int titleColor;
