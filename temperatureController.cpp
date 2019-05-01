@@ -51,7 +51,7 @@ bool TemperatureController::loadConfig(String fname){
 			fsInitialized = fatfs.begin();
 			if(fsInitialized){
 				if(fatfs.exists(fullFname)){
-					iofile = fatfs.open(fullFname, FILE_WRITE);	
+					iofile = fatfs.open(fullFname);	
 					if(!iofile){
 						lcd.println("Failed to open file.");
 					}
@@ -123,6 +123,11 @@ bool TemperatureController::saveConfig(String fname){
 		Adafruit_SPIFlash_FAT::File iofile;
 		bool fsInitialized = false;
 		bool flashInitialized = flash.begin(FLASH_TYPE);
+
+		if(fatfs.exists(fullFname)){
+			fatfs.remove(fullFname);
+		}
+
 		if (flashInitialized){
 			fsInitialized = fatfs.begin();
 			if(fsInitialized){
@@ -143,8 +148,8 @@ bool TemperatureController::saveConfig(String fname){
 			}
 		}
 
-		if(fatfs.exists(fullFname)){
-			fatfs.remove(fullFname);
+		if(!iofile){
+			lcd.println("Failed to open file for writing.");
 		}
 	#else
 		if(!SD.begin(SD_CS)){
@@ -164,6 +169,10 @@ bool TemperatureController::saveConfig(String fname){
 		}
 
 		File iofile = SD.open(fullFname, FILE_WRITE);
+
+		if(!iofile){
+			lcd.println("Failed to open file for writing.");
+		}
 	#endif
 
 
