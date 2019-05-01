@@ -6,6 +6,7 @@ void lcd_initialize(){
   lcd.initR(INITR_BLACKTAB);
   lcd.setTextWrap(true);
   lcd.setRotation(3);
+  cls();
 }
 
 

@@ -57,7 +57,10 @@ void setup() {
 	ram.thermistor.setResistorDivider(2.49e3);
 	ram.thermistor.setThermistorValue(10e3);
 
-	ram.loadConfig("test");
+	if(false == ram.loadConfig("test")){
+		lcd.println("Failed to load config.");
+	}
+	wait();
 }
 
 unsigned int oldtime;
@@ -69,6 +72,7 @@ void loop() {
 	graph tecPlt(0,2*CHARH + lcd.height()/2, lcd.width(), lcd.height());
 		
 	cls();
+
 	printHeader();
 
 	plt.setBoundary(0);
@@ -80,15 +84,24 @@ void loop() {
 	tecPlt.setYtics(3);
 	tecPlt.makeAxes();
 
-	ram.lockbox.G       	= 1/10000.;
-	ram.lockbox.P       	= 1;
-	ram.lockbox.I       	= 1;
-	ram.lockbox.setpoint	= 70; 
+	int i = 0;
+	unsigned oldtime = millis();
+
+	
+
+	lcd.println(ram.lockbox.setpoint);
+
+	ram.lockbox.setpoint = 3.141531987621938756982317659816;	
+	ram.lockbox.G = 10.985712038571209385702918357;
+	ram.lockbox.P = 1235.2140192837509128735039218;
+	ram.lockbox.I = 0.0894750987140958123579801327;
+	ram.lockbox.integral = 123098572.2315123095812735891;
+	ram.lockbox.outputOffset = 1.23132131232;
 
 	ram.saveConfig("test");
 
-	int i = 0;
-	oldtime = millis();
+	float avgTemp;
+	unsigned time;
 	while(true){
 		
 		//print time every second
@@ -96,7 +109,17 @@ void loop() {
 			// eraseTime(); printTime();  oldPrintTime = rtc.now();
 		} 
 
-		ram.lock();
+		if(millis() - oldtime > feedbackTime*1000.){
+			EOMtemps[i] = ram.lock();
+			times[i] = millis();
+
+			tecPlt.plotData(0, times, outputs, DATAPOINTS);
+			plt.plotData(0, times, EOMtemps, DATAPOINTS);
+			plt.drawGraph();
+			tecPlt.drawGraph();
+			
+			i = (i + 1) % DATAPOINTS;
+		}
 
 		//access settings menu
 		char key = keypad.getKey();
@@ -108,6 +131,7 @@ void loop() {
 		}
 	}
 }
+
 
 void printTime(){
 	DateTime now = rtc.now();

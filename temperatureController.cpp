@@ -17,7 +17,6 @@ TemperatureController::TemperatureController(){
 
 TemperatureController::TemperatureController(String name){
 	backup = name;
-
 }
 
 float TemperatureController::lock(){
@@ -51,7 +50,15 @@ bool TemperatureController::loadConfig(String fname){
 		if (flashInitialized){
 			fsInitialized = fatfs.begin();
 			if(fsInitialized){
-				iofile = fatfs.open(fullFname, FILE_WRITE);
+				if(fatfs.exists(fullFname)){
+					iofile = fatfs.open(fullFname, FILE_WRITE);	
+					if(!iofile){
+						lcd.println("Failed to open file.");
+					}
+				} else {
+					lcd.println("No such file: " + fullFname);
+				}
+				
 			} else {
 				lcd.println("FatFS failed to initialize!");
 				return false;
@@ -66,6 +73,7 @@ bool TemperatureController::loadConfig(String fname){
 			return false;
 		}
 	#else
+		File iofile;
 		if(!SD.begin(SD_CS)){
 			lcd.println("SD failed to initialize!");
 			return false;
@@ -76,22 +84,32 @@ bool TemperatureController::loadConfig(String fname){
 			return false;
 		}
 
-		File iofile = SD.open(fullFname, FILE_WRITE);
+		if(SD.exists(fullFname)){
+			iofile = SD.open(fullFname);
+			if(!iofile){
+				lcd.println("Failed to open file.");
+			}
+		} else {
+			lcd.println("No such file: " + fullFname);
+		}
+		
 	#endif
 
-		StaticJsonDocument<512> doc;
+
+		StaticJsonDocument<2048> doc;
 		DeserializationError error = deserializeJson(doc,iofile);
 		if(error){
 			lcd.println("Failed to read file, using default configuration.");
 			return false;
 		}
 
-		lockbox.G           	= doc["G"];           
-		lockbox.I           	= doc["I"];           
-		lockbox.P           	= doc["P"];           
+
+		lockbox.G           	= doc["G"]           ;
+		lockbox.I           	= doc["I"]           ;
+		lockbox.P           	= doc["P"]           ;
 		lockbox.outputOffset	= doc["outputOffset"];
-		lockbox.setpoint    	= doc["setpoint"];    
-		lockbox.integral    	= doc["integral"];    
+		lockbox.setpoint    	= doc["setpoint"]    ;
+		lockbox.integral    	= doc["integral"]    ;
 
 		iofile.close();
 		return true;
@@ -125,7 +143,7 @@ bool TemperatureController::saveConfig(String fname){
 			}
 		}
 
-		if(!fatfs.exists(fullFname)){
+		if(fatfs.exists(fullFname)){
 			fatfs.remove(fullFname);
 		}
 	#else
@@ -141,7 +159,7 @@ bool TemperatureController::saveConfig(String fname){
 			}
 		}
 
-		if(!SD.exists(fullFname)){
+		if(SD.exists(fullFname)){
 			SD.remove(fullFname);
 		}
 
@@ -149,7 +167,7 @@ bool TemperatureController::saveConfig(String fname){
 	#endif
 
 
-		StaticJsonDocument<512> doc;
+		StaticJsonDocument<2048> doc;
 
 		doc["G"]           	= lockbox.G;
 		doc["I"]           	= lockbox.I;
@@ -259,6 +277,25 @@ bool TemperatureController::saveConfig(String fname){
 			 T = 1/(a + b*logRtR+ c*pow(logRtR,2) + d*pow(logRtR,3));
 			 return T-T0;
 	};
+
+void printFile(const char *filename) {
+  // Open file for reading
+  File file = SD.open(filename);
+  if (!file) {
+    Serial.println(F("Failed to read file"));
+    return;
+  }
+
+  // Extract each characters by one by one
+  while (file.available()) {
+    Serial.print((char)file.read());
+  }
+  Serial.println();
+
+  // Close the file
+  file.close();
+}
+
 }
 
 #endif
