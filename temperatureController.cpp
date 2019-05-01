@@ -40,9 +40,9 @@ float TemperatureController::lock(){
 	}
 }
 
-void TemperatureController::saveConfig(String fname){
-	String dirName = String("/backups/");
-	String fullFname = dirName + fname + String(".bak");
+bool TemperatureController::loadConfig(String fname){
+	String dirName = String("/backups");
+	String fullFname = dirName + String("/") + fname + String(".bak");
 	
 	#ifdef expressMem_h
 		Adafruit_SPIFlash_FAT::File iofile;
@@ -54,20 +54,87 @@ void TemperatureController::saveConfig(String fname){
 				iofile = fatfs.open(fullFname, FILE_WRITE);
 			} else {
 				lcd.println("FatFS failed to initialize!");
-				return;
+				return false;
 			}
 		} else {
 			lcd.println("Flash failed to initialize!");
-			return;
+			return false;
+		}
+
+		if(!fatfs.exists(dirName)){
+			lcd.println("No backup directory!");
+			return false;
 		}
 	#else
 		if(!SD.begin(SD_CS)){
 			lcd.println("SD failed to initialize!");
-			return;
+			return false;
 		}
 
 		if(!SD.exists(dirName)){
-			SD.mkdir(dirName);
+			lcd.println("No backup directory!");
+			return false;
+		}
+
+		File iofile = SD.open(fullFname, FILE_WRITE);
+	#endif
+
+		StaticJsonDocument<512> doc;
+		DeserializationError error = deserializeJson(doc,iofile);
+		if(error){
+			lcd.println("Failed to read file, using default configuration.");
+			return false;
+		}
+
+		lockbox.G           	= doc["G"];           
+		lockbox.I           	= doc["I"];           
+		lockbox.P           	= doc["P"];           
+		lockbox.outputOffset	= doc["outputOffset"];
+		lockbox.setpoint    	= doc["setpoint"];    
+		lockbox.integral    	= doc["integral"];    
+
+		iofile.close();
+		return true;
+}
+
+bool TemperatureController::saveConfig(String fname){
+	String dirName = String("/backups");
+	String fullFname = dirName + String("/") + fname + String(".bak");
+	
+	#ifdef expressMem_h
+		Adafruit_SPIFlash_FAT::File iofile;
+		bool fsInitialized = false;
+		bool flashInitialized = flash.begin(FLASH_TYPE);
+		if (flashInitialized){
+			fsInitialized = fatfs.begin();
+			if(fsInitialized){
+				iofile = fatfs.open(fullFname, FILE_WRITE);
+			} else {
+				lcd.println("FatFS failed to initialize!");
+				return false;
+			}
+		} else {
+			lcd.println("Flash failed to initialize!");
+			return false;
+		}
+
+		if(!fatfs.exists(dirName)){
+			if(!fatfs.mkdir(dirName)){
+				lcd.println("Failed to make directory");
+				return false;
+			}
+		}
+	#else
+		if(!SD.begin(SD_CS)){
+			lcd.println("SD failed to initialize!");
+			return false;
+		}
+
+		if(!SD.exists(dirName)){
+			if(!SD.mkdir(dirName)){
+				lcd.println("Failed to make directory");
+				return false;
+			}
 		}
 
 		File iofile = SD.open(fullFname, FILE_WRITE);
@@ -85,9 +152,11 @@ void TemperatureController::saveConfig(String fname){
 
 		if(serializeJson(doc,iofile) == 0){
 			lcd.println("Failed to write file.");
+			return false;
 		}
 
 		iofile.close();
+		return true;
 
 }
 /*

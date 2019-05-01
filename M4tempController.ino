@@ -56,6 +56,8 @@ void setup() {
 
 	ram.thermistor.setResistorDivider(2.49e3);
 	ram.thermistor.setThermistorValue(10e3);
+
+	ram.loadConfig("test");
 }
 
 unsigned int oldtime;
@@ -83,7 +85,7 @@ void loop() {
 	ram.lockbox.I       	= 1;
 	ram.lockbox.setpoint	= 70; 
 
-	// ram.saveConfig("test");
+	ram.saveConfig("test");
 
 	int i = 0;
 	oldtime = millis();

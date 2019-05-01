@@ -4,7 +4,7 @@
 #include "lcd.h"
 #include <ArduinoJson.h>
 #include <SD.h>
-// #include "expressMem.h"
+#include "expressMem.h"
 
 namespace temperatureController {
 	class TemperatureController;
@@ -109,8 +109,8 @@ namespace temperatureController {
 			lcd.println("Determine Output Offset via increasing it until ");
 		}
 
-		void saveConfig(String fname);
-		void loadConfig(String fname);
+		bool saveConfig(String fname);
+		bool loadConfig(String fname);
 	};
 
 }
