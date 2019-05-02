@@ -21,10 +21,11 @@
 #include <RTClib.h>
 #include <math.h>
 #include "MemoryFree.h"
+#include "ramSettings.h"
+#include "eomSettings.h"
 
-#define SETPROGS 12
+#define PROGS 4
 #define DATAPOINTS 500
-#define RAMBAK "pdheom"
 
 float EOMtemps[DATAPOINTS] = {0};
 float FiberErrors[DATAPOINTS] = {0};
@@ -32,135 +33,73 @@ float times[DATAPOINTS] = {0};
 float outputs[DATAPOINTS] = {0};
 
 RTC_Millis rtc;
-
 temperatureController::TemperatureController ram;
+temperatureController::TemperatureController eom;
 
 void printTime();
 void printHeader();
-
-void setRamVar(float& x, String prompt){
-	char buff[50];
-	sprintf(buff, "Current value is: %e", x);
-	lcd.println(buff);
-	String temp = numInput(prompt);
-	if(temp.length() == 0){
-		lcd.println("No change made.");
-		delay(500);
-		return;
-	}
-
-	x = temp.toFloat();
-	ram.saveConfig(RAMBAK);
-}
-
-void setVar(float& x, String prompt){
-	char buff[50];
-	sprintf(buff, "Current value is: %e", x);
-	lcd.println(buff);
-	String temp = numInput(prompt);
-	if(temp.length() == 0){
-		lcd.println("No change made.");
-		delay(500);
-		return;
-	}
-
-	x = temp.toFloat();
-}
-
-void setFeedbackTime(){setRamVar(ram.feedbackTime, "Input feedback time:\n");}
-void setG(){setRamVar(ram.lockbox.G, "Input G:\n");}
-void setP(){setRamVar(ram.lockbox.P, "Input P:\n");}
-void setI(){setRamVar(ram.lockbox.I, "Input I (1/s):\n");}
-void setSetpoint(){setRamVar(ram.lockbox.setpoint, "Input setpoint (C):\n");};
-void setOutputOffset(){setRamVar(ram.lockbox.outputOffset, "Input outputOffset:\n");}
-
-void switchFeedback(){
-	ram.lockbox.G *= -1;
-	ram.saveConfig(RAMBAK);
-}
-
-
-void toggleFeedback(){
-	ram.lockbox.locked = !ram.lockbox.locked;
-}
-
-void zeroIntegrator(){
-	ram.lockbox.integral = 0;
-	ram.saveConfig(RAMBAK);
-}
-
 void printFreeRam(){
 	lcd.println("Free RAM is: ");
 	lcd.println(freeMemory());
 	wait();
 }
-void printSettings(){
-	char buff[200];
-	sprintf(buff, 
-		"Total Gain: %.3e\nProportional: %.3f\nIntegral Gain: %.3e\nOutput Offset: %.3f\nSetpoint (C): %.3f\n",
-		ram.lockbox.G, ram.lockbox.P,
-		ram.lockbox.I, ram.lockbox.outputOffset,
-		ram.lockbox.setpoint);
-	lcd.println(buff);
-	wait();
-}
 
-void output10kHzSineWave(){
-	while(true){
-		unsigned long time = micros();
-		float val = 1 + sin(6.28*time/1e6 * 10e3);
-		analogWrite(A0, val*((1 << 12) - 1));
-	}
-}
+
 menu settings;
-String settingsItems[SETPROGS]   = {
-	"Toggle Feedback",
-	"Print settings",
-	"Set setpoint",
-	"Switch feedback sign",
-	"Set the total gain G", 
-	"Set proportional gain P", 
-	"Set integral gain I", 
-	"Set output offset",
-	"Zero the integrator",
-	"Set feedbackTime",
-	"Print Avail. RAM",
-	"Output 10kHz on A0"
-	};
 
-void (*settingsProgs[SETPROGS])()= {
-	toggleFeedback,
-	printSettings,
-	setSetpoint, 
-	switchFeedback, 
-	setG, 
-	setP, 
-	setI, 
-	setOutputOffset,
-	zeroIntegrator,
-	setFeedbackTime,
-	printFreeRam,
-	output10kHzSineWave
+void printEOMsettings(){eomSettings.ui();}
+void printRamSettings(){ramSettings.ui();}
+void activateRAMfeedback(){
+	ram.lockbox.integral = 0;
+	ram.lockbox.outputOffset = eom.lockbox.output; 
+	eom.lockbox.locked = false; 
+	ram.lockbox.locked = true;
+}
+void activateTempFeedback(){eom.lockbox.locked = true; ram.lockbox.locked = false;}
+
+String settingsItems[PROGS] = {
+	"Temperature Feedback Settings",
+	"DC RAM Settings",
+	"Switch to RAM feedback",
+	"Switch to Temp. feedback"
 };
+
+void (*settingsProgs[PROGS])() = {
+	printEOMsettings,
+	printRamSettings,
+	activateRAMfeedback,
+	activateTempFeedback
+};
+
+
 
 void setup() {
 	lcd_initialize();
 
-	rtc.begin(DateTime(2019,1,1,12,0,0));
-	
 	settings.loop = false;
-	settings.defineTitle("-------PI BOX------");
-	settings.defineMenuItems(settingsItems,SETPROGS);
-	settings.defineMenuProgs(settingsProgs,SETPROGS);
+	settings.defineTitle("---menu---");
+	settings.defineMenuItems(settingsItems,PROGS);
+	settings.defineMenuProgs(settingsProgs,PROGS);
 
-	ram.setVoltage(3.3); 
-	ram.setResolution(12);
+	
+	eomSettings.loop = false;
+	eomSettings.defineTitle("-Temperature Lock Sett's-");
+	eomSettings.defineMenuItems(eomMenu::settingsItems,EOMPROGS);
+	eomSettings.defineMenuProgs(eomMenu::settingsProgs,EOMPROGS);
 
-	ram.thermistor.setResistorDivider(2.49e3);
-	ram.thermistor.setThermistorValue(10e3);
+	ramSettings.loop = false;
+	ramSettings.defineTitle("-Temperature Lock Sett's-");
+	ramSettings.defineMenuItems(ramMenu::settingsItems,RAMPROGS);
+	ramSettings.defineMenuProgs(ramMenu::settingsProgs,RAMPROGS);
 
-	ram.thermistor.setAnalogPin(A3);
-	ram.tec.setAnalogPin(A1);
+	eom.setVoltage(3.3); 
+	eom.setResolution(12);
+
+	eom.thermistor.setResistorDivider(2.49e3);
+	eom.thermistor.setThermistorValue(10e3);
+
+	eom.thermistor.setAnalogPin(A3);
+	eom.tec.setAnalogPin(A1);
 
 	//set pins 
 	if(SD.begin(SD_CS)){
@@ -168,7 +107,7 @@ void setup() {
 	} else {
 		lcd.println("SD card failed.");
 	}
-	if(false == ram.loadConfig(RAMBAK)){
+	if(false == eom.loadConfig(EOMBAK)){
 		lcd.println("Failed to load config.");
 	} else {
 		lcd.println("Loaded config! Success!");
@@ -213,12 +152,12 @@ void loop() {
 			// eraseTime(); printTime();  oldPrintTime = rtc.now();
 		} 
 
-		avgTemp = ram.lock();
+		avgTemp = eom.lock();
 
 		if(!isnan(avgTemp)){
 			EOMtemps[i] = avgTemp;
 			times[i] = millis()/1000.;
-			outputs[i] = ram.lockbox.output;
+			outputs[i] = eom.lockbox.output;
 			i = (i + 1) % DATAPOINTS;
 		}
 
@@ -248,7 +187,7 @@ void printHeader(){
 	GFXfont *oldFont = lcd.getFont();
 	lcd.setFont(&Picopixel);
 	lcd.setTextColor(ST7735_GREEN);
-	lcd.println("1157nm Clock Laser Ram Controller");
+	lcd.println("1157nm Clock Laser RAM Controller");
 	lcd.setTextColor(ST7735_WHITE);
 	lcd.println("Press any key for menu.");
 	lcd.setFont(oldFont);
