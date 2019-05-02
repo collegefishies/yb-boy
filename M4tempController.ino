@@ -19,47 +19,27 @@ String msg;
 
 
 void setup() {
-    Serial.begin(9600);
-    loopCount = 0;
-    startTime = millis();
-    msg = "";
+	lcd_initialize();
+	Serial.begin(9600);
+	loopCount = 0;
+	startTime = millis();
+	msg = "";
 }
 
 
 void loop() {
-    loopCount++;
-    if ( (millis()-startTime)>5000 ) {
-        Serial.print("Average loops per second = ");
-        Serial.println(loopCount/5);
-        startTime = millis();
-        loopCount = 0;
-    }
+	String input = numInput("Enter number: ");
+	if(input.length() == 0){
+		lcd.println("No input.");
+	} else {
+		lcd.print("You input: ");
+		char buff[10];
+		sprintf(buff, "%e",input.toFloat());
+		lcd.println(buff);
+	}
 
-    // Fills keypad.key[ ] array with up-to 10 active keys.
-    // Returns true if there are ANY active keys.
-    if (keypad.getKeys())
-    {
-        for (int i=0; i<LIST_MAX; i++)   // Scan the whole key list.
-        {
-            if ( keypad.key[i].stateChanged )   // Only find keys that have changed state.
-            {
-                switch (keypad.key[i].kstate) {  // Report active key state : IDLE, PRESSED, HOLD, or RELEASED
-                    case PRESSED:
-                    msg = " PRESSED.";
-                break;
-                    case HOLD:
-                    msg = " HOLD.";
-                break;
-                    case RELEASED:
-                    msg = " RELEASED.";
-                break;
-                    case IDLE:
-                    msg = " IDLE.";
-                }
-                Serial.print("Key ");
-                Serial.print(keypad.key[i].kchar);
-                Serial.println(msg);
-            }
-        }
-    }
+	wait();
+	cls();
+
+
 }  // End loop

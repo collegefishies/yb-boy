@@ -44,37 +44,66 @@ void keypadEvent(KeypadEvent key){
     }
 }
 
-int numInput(String prompt){
+String numInput(String prompt){
 	String input;
 
+	lcd.setTextColor(ST7735_BLUE);
+	lcd.println("Hold '1' for '.'\n     '0' for '-',\n     '3' for 'e'. ");
+	lcd.println("Leave blank for no input.");
+	lcd.setTextColor(ST7735_GREEN);
 	lcd.print(prompt);
+	lcd.setTextColor(ST7735_WHITE);
 		
-	char key = '\0';
-	//printCoords();
+
 	while(true){
-		key = keypad.getKey();
-		switch(key){
-			case '*':
-				if(input.length() > 0){
-					eraseChar();
-					//printCoords();
-					input.remove(input.length()-1);
+		if (keypad.getKeys())
+		{
+			for (int i=0; i<LIST_MAX; i++)   // Scan the whole key list.
+			{
+				if ( keypad.key[i].stateChanged )   // Only find keys that have changed state.
+				{
+					switch (keypad.key[i].kstate) {  // Report active key state : IDLE, PRESSED, HOLD, or RELEASED
+						case PRESSED:
+							if(keypad.key[i].kchar != '*' && keypad.key[i].kchar != '#'){
+								input.concat(keypad.key[i].kchar);
+								lcd.print(keypad.key[i].kchar);
+							} else if (keypad.key[i].kchar == '*') {
+								if(input.length() > 0){
+									eraseChar();
+									//printCoords();
+									input.remove(input.length()-1);
+								}
+							} else if (keypad.key[i].kchar == '#') {
+								lcd.println();
+								return input; 
+							}
+							break;
+						case HOLD:
+							if(keypad.key[i].kchar == '1'){
+								input.remove(input.length() - 1);
+								eraseChar();
+								input.concat('.');
+								lcd.print('.');
+							} else if (keypad.key[i].kchar == '0'){
+								input.remove(input.length() - 1);
+								eraseChar();
+								input.concat('-');
+								lcd.print('-');
+							} else if (keypad.key[i].kchar == '3'){
+								input.remove(input.length() - 1);
+								eraseChar();
+								input.concat('e');
+								lcd.print('e');
+							}
+							break;
+						case RELEASED:
+							break;
+						case IDLE:
+							break;
+					}
 				}
-				break;
-			case '#':
-				if(input.length() > 0){
-					lcd.println();
-					return input.toInt(); 
-				}
-				break;
-			default:
-				input.concat(key);
-				lcd.print(key);
-				//printCoords();
-			case '\0':
-				break;
+			}
 		}
-		delay(10);
 	}
 }
 

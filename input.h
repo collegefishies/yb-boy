@@ -32,7 +32,7 @@ void keypadEvent(KeypadEvent key);
 void eraseChar();
 void eraseChar(int n);
 
-int numInput(String prompt);  
+String numInput(String prompt);  
 
 void wait(); //wait until keypress
 void wait(String prompt); //wait until keypress
