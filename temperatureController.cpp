@@ -12,7 +12,7 @@ namespace temperatureController{
 
 TemperatureController::TemperatureController(){
 	lockbox.init(); tec.init(); thermistor.init(); 
-	averageNumber = 100; lastLockTime = millis(); feedbackTime = 0;
+	averageNumber = 100; lastLockTime = micros(); feedbackTime = 0;
 }
 
 TemperatureController::TemperatureController(String name){
@@ -21,9 +21,9 @@ TemperatureController::TemperatureController(String name){
 
 float TemperatureController::lock(){
 	float averageTemperature;
-	if((millis() - lastLockTime)/1000. >= feedbackTime){
-		lockbox.dt = (millis() - lastLockTime)/1000.;
-		lastLockTime = millis();
+	if((micros() - lastLockTime)/1.e6 >= feedbackTime){
+		lockbox.dt = (micros() - lastLockTime)/1.e6;
+		lastLockTime = micros();
 
 		//measure
 		averageTemperature = thermistor.getAverageTemperature(averageNumber,feedbackTime*1000);
@@ -36,6 +36,9 @@ float TemperatureController::lock(){
 		tec.setVoltage(lockbox.output);
 
 		return averageTemperature;
+	} else {
+		//return nans if feedback didn't occur.
+		return pow(-1,.5);
 	}
 }
 
@@ -200,8 +203,10 @@ bool TemperatureController::saveConfig(String fname){
 
 	void PIcontroller::feedback(){
 		error = input - setpoint;
-		integral += dt*error;
-		output = -G*(P*error + I*integral) + outputOffset; //note the negative feedback!
+		if(locked){
+			integral += dt*error;
+			output = -G*(P*error + I*integral) + outputOffset; //note the negative feedback!
+		}
 	}
 
 	const int averageNumber = 100;

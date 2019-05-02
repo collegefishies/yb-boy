@@ -7,7 +7,7 @@
 #include "expressMem.h"
 
 namespace temperatureController {
-	
+
 	class TemperatureController;
 	class Thermistor;
 	class TEC;
@@ -24,8 +24,10 @@ namespace temperatureController {
 			float error;
 			float integral;
 			float dt;
+
+			bool locked;
 			
-			void init(){G = P = I = output = input = setpoint = error = integral = dt = 0;};
+			void init(){G = P = I = output = input = setpoint = error = integral = dt = locked = 0;};
 			void feedback();	//call this loop repeatedly
 	};
 
@@ -88,7 +90,7 @@ namespace temperatureController {
 		TEC tec;
 		String backup;
 
-		unsigned int lastLockTime;
+		unsigned long lastLockTime;
 		float feedbackTime;
 		unsigned int averageNumber;
 

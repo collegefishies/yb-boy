@@ -25,7 +25,6 @@
 #define DATAPOINTS 500
 #define RAMBAK "pdheom"
 
-float feedbackTime = 0.01;
 float EOMtemps[DATAPOINTS] = {0};
 float FiberErrors[DATAPOINTS] = {0};
 float times[DATAPOINTS] = {0};
@@ -67,7 +66,7 @@ void setVar(float& x, String prompt){
 	x = temp.toFloat();
 }
 
-/*void setFeedbackTime(){setVar(feedbackTime, "Input feedback time:\n");}*/
+void setFeedbackTime(){setRamVar(ram.feedbackTime, "Input feedback time:\n");}
 void setG(){setRamVar(ram.lockbox.G, "Input G:\n");}
 void setP(){setRamVar(ram.lockbox.P, "Input P:\n");}
 void setI(){setRamVar(ram.lockbox.I, "Input I (1/s):\n");}
@@ -79,10 +78,10 @@ void switchFeedback(){
 	ram.saveConfig(RAMBAK);
 }
 
-/*
+
 void toggleFeedback(){
-	// ram.lockbox.locked = !ram.lockbox.locked;
-}*/
+	ram.lockbox.locked = !ram.lockbox.locked;
+}
 
 void zeroIntegrator(){
 	ram.lockbox.integral = 0;
@@ -109,7 +108,8 @@ String settingsItems[SETPROGS]   = {
 	"Set proportional gain P", 
 	"Set integral gain I", 
 	"Set output offset",
-	"Zero the integrator" 
+	"Zero the integrator",
+	"Set feedbackTime" 
 	};
 
 void (*settingsProgs[SETPROGS])()= {
@@ -120,7 +120,8 @@ void (*settingsProgs[SETPROGS])()= {
 	setP, 
 	setI, 
 	setOutputOffset,
-	zeroIntegrator
+	zeroIntegrator,
+	setFeedbackTime
 };
 
 void setup() {
@@ -141,6 +142,7 @@ void setup() {
 
 	ram.thermistor.setAnalogPin(A3);
 	ram.tec.setAnalogPin(A1);
+
 	//set pins 
 	if(SD.begin(SD_CS)){
 		lcd.println("SD card connected!");
@@ -155,7 +157,6 @@ void setup() {
 	wait();
 }
 
-unsigned int oldtime;
 
 DateTime oldPrintTime;
 
@@ -179,7 +180,9 @@ void loop() {
 	tecPlt.makeAxes();
 
 	int i = 0;
-	unsigned oldtime = millis();
+
+	unsigned long lastPlotTime = millis();
+	unsigned long oldtime = millis();
 
 	float avgTemp;
 	unsigned time;
@@ -190,19 +193,24 @@ void loop() {
 			// eraseTime(); printTime();  oldPrintTime = rtc.now();
 		} 
 
-		if(millis() - oldtime > feedbackTime*1000.){
-			EOMtemps[i] = ram.lock();
+		avgTemp = ram.lock();
+
+		if(!isnan(avgTemp)){
+			EOMtemps[i] = avgTemp;
 			times[i] = millis()/1000.;
 			outputs[i] = ram.lockbox.output;
+			i = (i + 1) % DATAPOINTS;
+		}
 
+		//plot every second
+		if(millis() - lastPlotTime > 1000){
+			lastPlotTime = millis();
 			tecPlt.plotData(0, times, outputs, DATAPOINTS);
 			plt.plotData(0, times, EOMtemps, DATAPOINTS);
 			plt.drawGraph();
 			tecPlt.drawGraph();
-			
-			i = (i + 1) % DATAPOINTS;
 		}
-
+			
 		//access settings menu
 		char key = keypad.getKey();
 		if(key){
