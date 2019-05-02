@@ -7,6 +7,7 @@
 #include "expressMem.h"
 
 namespace temperatureController {
+	
 	class TemperatureController;
 	class Thermistor;
 	class TEC;

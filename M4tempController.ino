@@ -142,6 +142,14 @@ void setup() {
 	ram.thermistor.setResistorDivider(2.49e3);
 	ram.thermistor.setThermistorValue(10e3);
 
+	ram.thermistor.setAnalogPin(A3);
+	ram.tec.setAnalogPin(A1);
+	//set pins 
+	if(SD.begin(SD_CS)){
+		lcd.println("SD card connected!");
+	} else {
+		lcd.println("SD card failed.");
+	}
 	if(false == ram.loadConfig(RAMBAK)){
 		lcd.println("Failed to load config.");
 	} else {
@@ -209,11 +217,6 @@ void loop() {
 		}
 	}
 }
-
-
-
-
-
 
 void printHeader(){
 	lcd.setCursor(0,0);
