@@ -292,9 +292,11 @@ void graph::plotData(int traceNum, float* x, float* y, int len){
 			xmax=x[0];
 			xmin=x[0];
 			for (int i = 0; i < len; ++i)
-			{
-					xmax = max(xmax,x[i]);
-					xmin = min(xmin,x[i]);
+			{	
+			 	if(!isnan(x[i])){
+			 		xmax = max(xmax,x[i]);
+			 		xmin = min(xmin,x[i]);
+			 	}
 			}
 		} 
 
@@ -303,8 +305,10 @@ void graph::plotData(int traceNum, float* x, float* y, int len){
 			ymin=y[0];
 			for (int i = 0; i < len; ++i)
 			{
-				ymax = max(ymax,y[i]);
-				ymin = min(ymin,y[i]);
+				if(!isnan(y[i])){
+					ymax = max(ymax,y[i]);
+					ymin = min(ymin,y[i]);
+				}
 			}
 		}
 
@@ -329,13 +333,13 @@ void graph::plotData(int traceNum, float* x, float* y, int len){
 
 		for (int i = 0; i < len; ++i)
 		{		
-		 	if(x[i] > xmin && x[i] < xmax){
+		 	if(x[i] > xmin && x[i] < xmax && !isnan(x[i])){
 		 		intX[i] = round((XF-X0)*(x[i]-xmin)/(xmax-xmin)) + X0;	
 		 	} else {
 		 		intX[i] = -1;
 		 	}
 		 	
-		 	if(y[i] > ymin && y[i] < ymax){
+		 	if(y[i] > ymin && y[i] < ymax && !isnan(y[i])){
 		 		intY[i] = round((YF-Y0)*(y[i]-ymin)/(ymax-ymin)) + Y0;
 		 	} else {
 		 		intY[i] = -1;
