@@ -22,7 +22,7 @@
 #include <math.h>
 #include "MemoryFree.h"
 
-#define SETPROGS 11
+#define SETPROGS 12
 #define DATAPOINTS 500
 #define RAMBAK "pdheom"
 
@@ -105,6 +105,13 @@ void printSettings(){
 	wait();
 }
 
+void output10kHzSineWave(){
+	while(true){
+		unsigned long time = micros();
+		float val = 1 + sin(6.28*time/1e6 * 10e3);
+		analogWrite(A0, val*((1 << 12) - 1));
+	}
+}
 menu settings;
 String settingsItems[SETPROGS]   = {
 	"Toggle Feedback",
@@ -117,7 +124,8 @@ String settingsItems[SETPROGS]   = {
 	"Set output offset",
 	"Zero the integrator",
 	"Set feedbackTime",
-	"Print Avail. RAM"
+	"Print Avail. RAM",
+	"Output 10kHz on A0"
 	};
 
 void (*settingsProgs[SETPROGS])()= {
@@ -131,7 +139,8 @@ void (*settingsProgs[SETPROGS])()= {
 	setOutputOffset,
 	zeroIntegrator,
 	setFeedbackTime,
-	printFreeRam
+	printFreeRam,
+	output10kHzSineWave
 };
 
 void setup() {
