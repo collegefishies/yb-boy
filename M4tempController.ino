@@ -21,7 +21,7 @@
 #include <RTClib.h>
 #include <math.h>
 
-#define SETPROGS 10
+#define SETPROGS 8
 #define DATAPOINTS 500
 #define RAMBAK "pdheom"
 
@@ -67,7 +67,7 @@ void setVar(float& x, String prompt){
 	x = temp.toFloat();
 }
 
-void setFeedbackTime(){setVar(feedbackTime, "Input feedback time:\n");}
+/*void setFeedbackTime(){setVar(feedbackTime, "Input feedback time:\n");}*/
 void setG(){setRamVar(ram.lockbox.G, "Input G:\n");}
 void setP(){setRamVar(ram.lockbox.P, "Input P:\n");}
 void setI(){setRamVar(ram.lockbox.I, "Input I (1/s):\n");}
@@ -79,9 +79,10 @@ void switchFeedback(){
 	ram.saveConfig(RAMBAK);
 }
 
+/*
 void toggleFeedback(){
 	// ram.lockbox.locked = !ram.lockbox.locked;
-}
+}*/
 
 void zeroIntegrator(){
 	ram.lockbox.integral = 0;
@@ -101,7 +102,6 @@ void printSettings(){
 
 menu settings;
 String settingsItems[SETPROGS]   = {
-	"Toggle Lock",
 	"Print settings",
 	"Set setpoint",
 	"Switch feedback sign",
@@ -109,12 +109,10 @@ String settingsItems[SETPROGS]   = {
 	"Set proportional gain P", 
 	"Set integral gain I", 
 	"Set output offset",
-	"Set time between feedbacks",
 	"Zero the integrator" 
 	};
 
 void (*settingsProgs[SETPROGS])()= {
-	toggleFeedback,
 	printSettings,
 	setSetpoint, 
 	switchFeedback, 
@@ -122,7 +120,6 @@ void (*settingsProgs[SETPROGS])()= {
 	setP, 
 	setI, 
 	setOutputOffset,
-	setFeedbackTime,
 	zeroIntegrator
 };
 
