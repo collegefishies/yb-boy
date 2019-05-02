@@ -50,6 +50,7 @@ String numInput(String prompt){
 	lcd.setTextColor(ST7735_BLUE);
 	lcd.println("Hold '1' for '.'\n     '0' for '-',\n     '3' for 'e'. ");
 	lcd.println("Leave blank for no input.");
+	lcd.println("Press '*' for backspace,\n    '#' to submit.");
 	lcd.setTextColor(ST7735_GREEN);
 	lcd.print(prompt);
 	lcd.setTextColor(ST7735_WHITE);
