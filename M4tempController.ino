@@ -80,7 +80,7 @@ void switchFeedback(){
 }
 
 void toggleFeedback(){
-	ram.lockbox.locked = !ram.lockbox.locked;
+	// ram.lockbox.locked = !ram.lockbox.locked;
 }
 
 void zeroIntegrator(){
@@ -186,7 +186,7 @@ void loop() {
 		} 
 
 		if(millis() - oldtime > feedbackTime*1000.){
-			EOMtemps[i] = ram.lockTemperature((millis() - oldtime)/1000.);
+			EOMtemps[i] = ram.lock();
 			times[i] = millis()/1000.;
 			outputs[i] = ram.lockbox.output;
 
