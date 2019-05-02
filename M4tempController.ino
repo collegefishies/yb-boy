@@ -20,8 +20,9 @@
 #include "temperatureController.h"
 #include <RTClib.h>
 #include <math.h>
+#include "MemoryFree.h"
 
-#define SETPROGS 8
+#define SETPROGS 11
 #define DATAPOINTS 500
 #define RAMBAK "pdheom"
 
@@ -88,6 +89,11 @@ void zeroIntegrator(){
 	ram.saveConfig(RAMBAK);
 }
 
+void printFreeRam(){
+	lcd.println("Free RAM is: ");
+	lcd.println(freeMemory());
+	wait();
+}
 void printSettings(){
 	char buff[200];
 	sprintf(buff, 
@@ -101,6 +107,7 @@ void printSettings(){
 
 menu settings;
 String settingsItems[SETPROGS]   = {
+	"Toggle Feedback",
 	"Print settings",
 	"Set setpoint",
 	"Switch feedback sign",
@@ -109,10 +116,12 @@ String settingsItems[SETPROGS]   = {
 	"Set integral gain I", 
 	"Set output offset",
 	"Zero the integrator",
-	"Set feedbackTime" 
+	"Set feedbackTime",
+	"Print Avail. RAM"
 	};
 
 void (*settingsProgs[SETPROGS])()= {
+	toggleFeedback,
 	printSettings,
 	setSetpoint, 
 	switchFeedback, 
@@ -121,7 +130,8 @@ void (*settingsProgs[SETPROGS])()= {
 	setI, 
 	setOutputOffset,
 	zeroIntegrator,
-	setFeedbackTime
+	setFeedbackTime,
+	printFreeRam
 };
 
 void setup() {
@@ -171,6 +181,7 @@ void loop() {
 	plt.setBoundary(0);
 	plt.setYtics(3);
 	plt.setXtics(3);
+	plt.setYlims(20,70);
 	plt.setXauto();
 	plt.makeAxes();
 	plt.makeGrid();
