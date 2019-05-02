@@ -1,4 +1,8 @@
 #include "input.h"
+byte ledPin; 
+
+boolean blink;
+boolean ledPin_state;
 
 byte rowPins[ROWS] = {5, 6, 9, 10}; //connect to the row pinouts of the kpd
 byte colPins[COLS] = {11,12,13}; //connect to the column pinouts of the kpd
@@ -15,24 +19,29 @@ void keypad_initialize(){
 	keypad.addEventListener(keypadEvent);
 }
 
+// Taking care of some special events.
 void keypadEvent(KeypadEvent key){
-	switch (keypad.getState()){
-		// case PRESSED:
-		//	released = false;
-		//	hold = false;
-		//	pressed = true;
-		//	break;
-		// case HOLD:
-		//	hold = true;
-		//	pressed = false;
-		//	released = false;
-		//	break;
-		// case RELEASED:
-		//	released = true;
-		//	hold = false;
-		//	pressed = false;
-		//	break;
-	}
+    switch (keypad.getState()){
+    case PRESSED:
+        if (key == '#') {
+            digitalWrite(ledPin,!digitalRead(ledPin));
+            ledPin_state = digitalRead(ledPin);        // Remember LED state, lit or unlit.
+        }
+        break;
+
+    case RELEASED:
+        if (key == '*') {
+            digitalWrite(ledPin,ledPin_state);    // Restore LED state from before it started blinking.
+            blink = false;
+        }
+        break;
+
+    case HOLD:
+        if (key == '*') {
+            blink = true;    // Blink the LED when holding the * key.
+        }
+        break;
+    }
 }
 
 int numInput(String prompt){

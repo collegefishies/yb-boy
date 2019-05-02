@@ -3,6 +3,12 @@
 #include "lcd.h"
 #include <Keypad.h>
 
+
+extern byte ledPin; 
+
+extern boolean blink;
+extern boolean ledPin_state;
+
 const byte ROWS = 4; //four rows
 const byte COLS = 3; //three columns
 extern char keys[ROWS][COLS];
