@@ -9,7 +9,7 @@ char keys[ROWS][COLS] = {
 {'*','0','#'}
 };
 
-Keyboard keypad = Keyboard( makeKeymap(keys), rowPins, colPins, ROWS, COLS );
+Keypad keypad = Keypad( makeKeymap(keys), rowPins, colPins, ROWS, COLS );
 
 void keypad_initialize(){
 	keypad.addEventListener(keypadEvent);
@@ -17,21 +17,21 @@ void keypad_initialize(){
 
 void keypadEvent(KeypadEvent key){
 	switch (keypad.getState()){
-		case PRESSED:
-			released = false;
-			hold = false;
-			pressed = true;
-			break;
-		case HOLD:
-			hold = true;
-			pressed = false;
-			released = false;
-			break;
-		case RELEASED:
-			released = true;
-			hold = false;
-			pressed = false;
-			break;
+		// case PRESSED:
+		//	released = false;
+		//	hold = false;
+		//	pressed = true;
+		//	break;
+		// case HOLD:
+		//	hold = true;
+		//	pressed = false;
+		//	released = false;
+		//	break;
+		// case RELEASED:
+		//	released = true;
+		//	hold = false;
+		//	pressed = false;
+		//	break;
 	}
 }
 

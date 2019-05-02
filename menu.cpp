@@ -53,7 +53,7 @@ void menu::ui(){
         next();
         printMenu();
         break;
-      case '#':
+      case '5':
         cls(); 
         (menuProgs[index])();
         if(!loop){
@@ -137,7 +137,7 @@ void menu::printMenu() {
 
   //print useful info
   lcd.setCursor(0, CHARH*(SCR_HEIGHT_IN_CHARS-1));
-  lcd.print("2:UP,8:DWN,#:SEL,4:BACK");
+  lcd.print("2:UP,8:DWN,5:SEL,4:BACK");
 }
 
 void menu::next(){
