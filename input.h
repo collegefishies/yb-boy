@@ -12,6 +12,14 @@ extern char keys[ROWS][COLS];
 extern byte rowPins[ROWS]; //connect to the row pinouts of the kpd
 extern byte colPins[COLS]; //connect to the column pinouts of the kpd
 
+
+class Keyboard : public keypad{
+	void init();
+	bool held;
+	bool released;
+	bool pressed;
+};
+
 void keypadEvent(KeypadEvent key);
 
 void eraseChar();
@@ -22,6 +30,6 @@ int numInput(String prompt);
 void wait(); //wait until keypress
 void wait(String prompt); //wait until keypress
 
-extern Keypad keypad;
+extern Keyboard keypad;
 
 #endif

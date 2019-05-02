@@ -21,7 +21,7 @@
 #include <RTClib.h>
 #include <math.h>
 
-#define SETPROGS 6
+#define SETPROGS 8
 #define DATAPOINTS 500
 #define RAMBAK "pdheom"
 
@@ -68,10 +68,44 @@ void setOutputOffset(){
 	ram.saveConfig(RAMBAK);
 }
 
+void zeroIntegrator(){
+	ram.lockbox.integral = 0;
+	ram.saveConfig(RAMBAK);
+}
+
+void printSettings(){
+	char buff[200];
+	sprintf(buff, 
+		"Total Gain: %.3e\nProportional: %.3f\nIntegral Gain: %.3e\nOutput Offset: %.3f\nSetpoint (C): %.3f\n",
+		ram.lockbox.G, ram.lockbox.P,
+		ram.lockbox.I, ram.lockbox.outputOffset,
+		ram.lockbox.setpoint);
+	lcd.println(buff);
+	wait();
+}
 
 menu settings;
-String settingsItems[SETPROGS]   = {"Set setpoint","Switch feedback sign", "Set the total gain", "Set P", "Set integral gain I", "Set output offset"};
-void (*settingsProgs[SETPROGS])()= {setSetpoint, switchFeedback, setG, setP, setI, setOutputOffset};
+String settingsItems[SETPROGS]   = {
+	"Print settings",
+	"Set setpoint",
+	"Switch feedback sign",
+	"Set the total gain G", 
+	"Set proportional gain P", 
+	"Set integral gain I", 
+	"Set output offset",
+	"Zero the integrator" 
+	};
+
+void (*settingsProgs[SETPROGS])()= {
+	printSettings,
+	setSetpoint, 
+	switchFeedback, 
+	setG, 
+	setP, 
+	setI, 
+	setOutputOffset,
+	zeroIntegrator
+};
 
 void setup() {
 	lcd_initialize();
@@ -102,8 +136,8 @@ unsigned int oldtime;
 DateTime oldPrintTime;
 
 void loop() {
-	graph plt(0,3*CHARH,lcd.width(),lcd.height()/2);
-	graph tecPlt(0,2*CHARH + lcd.height()/2, lcd.width(), lcd.height());
+	graph plt(4*CHARW,3*CHARH,lcd.width(),lcd.height()/2);
+	graph tecPlt(4*CHARW,2*CHARH + lcd.height()/2, lcd.width(), lcd.height());
 		
 	cls();
 

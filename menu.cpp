@@ -56,9 +56,11 @@ void menu::ui(){
       case '#':
         cls(); 
         (menuProgs[index])();
-        if(loop){
-          printMenu();
+        if(!loop){
+          return;
         }
+        printMenu();
+        
         break;
       case '4':
         return;
