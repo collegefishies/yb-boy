@@ -1,4 +1,4 @@
-#define EOMPROGS 10
+#define EOMPROGS 9
 #define EOMBAK "TEMP_PI"
 menu eomSettings;
 
@@ -74,7 +74,6 @@ void printSettings(){
 }
 
 String settingsItems[EOMPROGS]   = {
-	"Toggle Feedback",
 	"Print settings",
 	"Set setpoint",
 	"Switch feedback sign",
@@ -87,7 +86,6 @@ String settingsItems[EOMPROGS]   = {
 	};
 
 void (*settingsProgs[EOMPROGS])()= {
-	toggleFeedback,
 	printSettings,
 	setSetpoint, 
 	switchFeedback, 

@@ -2,7 +2,8 @@
 #define RAMBAK "RAM_PI"
 menu ramSettings;
 
-extern temperatureController::TemperatureController ram;
+extern temperatureController::GeneralController ram;
+extern temperatureController::TemperatureController eom;
 
 namespace ramMenu {
 
@@ -69,8 +70,12 @@ void printSettings(){
 	wait();
 }
 
+void copyOutputToRAMfromTEMP(){
+	ram.lockbox.outputOffset = eom.lockbox.output;
+}
+
 String settingsItems[RAMPROGS]   = {
-	"Toggle Feedback",
+	"Set Temp. Out to RAM OutOffs.",
 	"Print settings",
 	"Set setpoint",
 	"Switch feedback sign",
@@ -83,7 +88,7 @@ String settingsItems[RAMPROGS]   = {
 	};
 
 void (*settingsProgs[RAMPROGS])()= {
-	toggleFeedback,
+	copyOutputToRAMfromTEMP,
 	printSettings,
 	setSetpoint, 
 	switchFeedback, 

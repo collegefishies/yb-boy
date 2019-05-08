@@ -7,6 +7,33 @@
 
 namespace temperatureController{
 /*
+ *	General Controller
+ */
+
+float GeneralController::lock(){
+	float averageVoltage;
+	if((micros() - lastLockTime)/1.e6 >= feedbackTime){
+		lockbox.dt = (micros() - lastLockTime)/1.e6;
+		lastLockTime = micros();
+
+		//measure
+		averageVoltage = thermistor.getAverageVoltage(averageNumber,feedbackTime*1000);
+
+		//feed to PI
+		lockbox.input = averageVoltage;
+
+		//feedback
+		lockbox.feedback();
+		tec.setVoltage(lockbox.output);
+
+		return averageVoltage;
+	} else {
+		//return nans if feedback didn't occur.
+		return pow(-1,.5);
+	}
+}
+
+/*
  *  Temperature Controller
  */
 

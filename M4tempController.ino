@@ -33,7 +33,7 @@ float times[DATAPOINTS] = {0};
 float outputs[DATAPOINTS] = {0};
 
 RTC_Millis rtc;
-temperatureController::TemperatureController ram;
+temperatureController::GeneralController ram;
 temperatureController::TemperatureController eom;
 
 void printTime();
@@ -93,13 +93,18 @@ void setup() {
 	ramSettings.defineMenuProgs(ramMenu::settingsProgs,RAMPROGS);
 
 	eom.setVoltage(3.3); 
+	ram.setVoltage(3.3);
 	eom.setResolution(12);
+	ram.setResolution(12);
 
 	eom.thermistor.setResistorDivider(2.49e3);
 	eom.thermistor.setThermistorValue(10e3);
 
+	ram.thermistor.setAnalogPin(A2);
 	eom.thermistor.setAnalogPin(A3);
+	ram.tec.setAnalogPin(A1);
 	eom.tec.setAnalogPin(A1);
+
 
 	//set pins 
 	if(SD.begin(SD_CS)){
@@ -129,7 +134,6 @@ void loop() {
 	plt.setBoundary(0);
 	plt.setYtics(3);
 	plt.setXtics(3);
-	plt.setYlims(20,70);
 	plt.setXauto();
 	plt.makeAxes();
 	plt.makeGrid();
@@ -153,12 +157,29 @@ void loop() {
 		} 
 
 		avgTemp = eom.lock();
+		ram.lock();
+
 
 		if(!isnan(avgTemp)){
 			EOMtemps[i] = avgTemp;
 			times[i] = millis()/1000.;
 			outputs[i] = eom.lockbox.output;
 			i = (i + 1) % DATAPOINTS;
+
+			//log data to sd card
+			String dataString = "";
+
+			dataString += times[(i-1+DATAPOINTS)%DATAPOINTS];
+			dataString += '\t';
+			dataString += avgTemp;
+
+			File dataFile = SD.open("eomtemp.txt", FILE_WRITE);
+
+			  // if the file is available, write to it:
+			if (dataFile) {
+			    dataFile.println(dataString);
+			    dataFile.close();
+			}
 		}
 
 		//plot every second

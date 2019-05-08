@@ -116,6 +116,11 @@ namespace temperatureController {
 		bool loadConfig(String fname);
 	};
 
+	class GeneralController : public TemperatureController{
+	public:
+		float lock();
+	};
+
 }
 
 #endif
