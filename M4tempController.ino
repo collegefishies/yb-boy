@@ -26,8 +26,9 @@
 /***** Global Variables ********/
 	//global variables
 		#define LOGICPIN      	//pin where we read in whether or not we lock
-		#define PROGS 4       	//number of programs in the settings menu
+		#define PROGS 6       	//number of programs in the settings menu
 		#define DATAPOINTS 500	//the number of datpoints we hold for the graph.
+		#define SWITCHPIN  A5
 
 	//vars for holding data to plot
 		float EOMtemps[DATAPOINTS] = {NAN};
@@ -55,29 +56,61 @@
 		}
 
 	//functions to be called in the settings menu.
+		void printPinOuts(){
+			lcd.print("eom sense pin: A"); lcd.println(eom.thermistor.pin-A0);
+			lcd.print("ram sense pin: A"); lcd.println(ram.thermistor.pin-A0);
+			lcd.print("eom drive pin: A"); lcd.println(eom.tec.pin-A0);
+			lcd.print("ram drive pin: A"); lcd.println(ram.tec.pin-A0);
+			lcd.print("switch pin:    A"); lcd.println(SWITCHPIN-A0);
+			wait();
+		}
 		void printEOMsettings(){eomSettings.ui();}
 		void printRamSettings(){ramSettings.ui();}
 		void activateRAMfeedback(){
 			ram.lockbox.integral = 0;
 			ram.lockbox.outputOffset = eom.lockbox.output; 
-			eom.lockbox.locked = false; 
+			eom.lockbox.locked = false;
 			ram.lockbox.locked = true;
 		}
 		void activateTempFeedback(){eom.lockbox.locked = true; ram.lockbox.locked = false;}
-
+		void rotateScreenUI(){
+			lcd.println("[1-4] Rotation Type, # to exit");
+			while(true){
+				
+				char key = keypad.getKey();
+				
+				switch(key){
+					case '1':
+					case '2':
+					case '3':
+					case '4':
+						lcd.setRotation(key - '1' + 1);
+						cls();
+						lcd.println("[1-4] Rotation Type, # to exit");
+						break;
+					case '#':
+						return;
+						break;
+				}
+			}
+		}
 	//names of the settings menu items
 		String settingsItems[PROGS] = {
 			"Temperature Feedback Settings",
 			"DC RAM Settings",
 			"Switch to RAM feedback",
-			"Switch to Temp. feedback"
+			"Switch to Temp. feedback",
+			"Print Pinouts",
+			"Rotate Screen"
 		};
 	//program array for the settings menu
 		void (*settingsProgs[PROGS])() = {
 			printEOMsettings,
 			printRamSettings,
 			activateRAMfeedback,
-			activateTempFeedback
+			activateTempFeedback,
+			printPinOuts,
+			rotateScreenUI
 		};
 
 
@@ -175,15 +208,15 @@ void loop() {
 		float avgTemp = NAN;
 		unsigned time;
 
-		activateTempFeedback()	//lock temperature just as a default.
+		activateTempFeedback();	//lock temperature just as a default.
 
 	while(true){
 
 		//either lock the eom or ram depending on what we want.
-		if( eom.lockbox.locked ){
+		if( eom.lockbox.locked && digitalRead(SWITCHPIN)){
 			avgTemp = eom.lock();	//eom.lock() measures for a long time then returns the average
 			                     	//temperature	
-		} else if (ram.lockbox.locked) {
+		} else if (ram.lockbox.locked && digitalRead(SWITCHPIN)) {
 			ram.lock();	
 		}
 
@@ -225,11 +258,15 @@ void loop() {
 		//access settings menu if key is pressed
 			char key = keypad.getKey();
 			if(key){
+				if(key == '*'){
+					return;
+				}
 				lcd.setFont();
 				settings.ui();
 				oldtime = millis(); // don't integrate for the huge time we were in menu.
 				cls();
 				printHeader();
+
 			}
 	}
 }
@@ -243,6 +280,6 @@ void loop() {
 		lcd.setTextColor(ST7735_GREEN);
 		lcd.println("1157nm Clock Laser RAM Controller");
 		lcd.setTextColor(ST7735_WHITE);
-		lcd.println("Press any key for menu.");
+		lcd.println("Press any key for menu. * to re-loop.");
 		lcd.setFont(oldFont);
 	}
