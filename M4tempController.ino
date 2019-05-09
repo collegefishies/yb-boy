@@ -9,27 +9,31 @@
 #include "input.h"  //includes keypad inputs
 #include "menu.h"
 
-//progs
+//utilities
 #include "bitArray.h"
 #include "graph.h"
+
+//applications
 #include "temperatureController.h"
 #include <RTClib.h>
 #include <math.h>
 #include "MemoryFree.h"
-#include "ramSettings.h"
-#include "eomSettings.h"
+
+#include "ramSettings.h"	//header file to wrap ramSettings menu.
+#include "eomSettings.h"	//need to put into it's own class eventually...
 
 
 /***** Global Variables ********/
 	//global variables
+		#define LOGICPIN      	//pin where we read in whether or not we lock
 		#define PROGS 4       	//number of programs in the settings menu
 		#define DATAPOINTS 500	//the number of datpoints we hold for the graph.
 
 	//vars for holding data to plot
-		float EOMtemps[DATAPOINTS] = {0};
-		float FiberErrors[DATAPOINTS] = {0};
-		float times[DATAPOINTS] = {0};
-		float outputs[DATAPOINTS] = {0};
+		float EOMtemps[DATAPOINTS] = {NAN};
+		float FiberErrors[DATAPOINTS] = {NAN};
+		float times[DATAPOINTS] = {NAN};
+		float outputs[DATAPOINTS] = {NAN};
 
 	//temperature controllers and time keeper objects
 		RTC_Millis rtc;
@@ -121,99 +125,112 @@ void setup() {
 	eom.tec.setAnalogPin(A1);       	//set DAC for EOM, note it's the same pin! because both 
 	                                	//feedback mechanisms are the same! they don't interfere.
 
+	/******* Load SD Card and print Info! ************/
 
 
-	//set pins 
 	if(SD.begin(SD_CS)){
 		lcd.println("SD card connected!");
 	} else {
 		lcd.println("SD card failed.");
 	}
-	if(false == eom.loadConfig(EOMBAK)){
+
+	if(false == eom.loadConfig(EOMBAK)){            //check to see if we have settings backed up.
 		lcd.println("Failed to load config.");
 	} else {
 		lcd.println("Loaded config! Success!");
 	}
-	wait();
+	wait();	//begin
 }
 
 
 DateTime oldPrintTime;
 
 void loop() {
-	graph plt(0,3*CHARH,lcd.width(),2*CHARH + lcd.height()/2);
-	graph tecPlt(0,2*CHARH + lcd.height()/2, lcd.width(), lcd.height());
-		
-	cls();
-
+	cls();	//clear the screen
 	printHeader();
+	
+	//define graph objects, and their plotting area
+		graph plt(0,3*CHARH,lcd.width(),2*CHARH + lcd.height()/2);
+		graph tecPlt(0,2*CHARH + lcd.height()/2, lcd.width(), lcd.height());
+		
+		
+	//temperature plot settings 
+		plt.setBoundary(0);
+		plt.setYtics(3);
+		plt.setXtics(3);
+		plt.setXauto();
+		plt.makeAxes();
+		plt.makeGrid();
+	//TEC output plot settings
+		tecPlt.setBoundary(10);
+		tecPlt.setYtics(3);
+		tecPlt.makeGrid();
+		tecPlt.makeAxes();
 
-	plt.setBoundary(0);
-	plt.setYtics(3);
-	plt.setXtics(3);
-	plt.setXauto();
-	plt.makeAxes();
-	plt.makeGrid();
-	tecPlt.setBoundary(10);
-	tecPlt.setYtics(3);
-	tecPlt.makeGrid();
-	tecPlt.makeAxes();
 
-	int i = 0;
+	//declare variables for looping application
+		int i = 0;
+		unsigned long lastPlotTime = millis();
+		unsigned long oldtime = millis();
+		float avgTemp = NAN;
+		unsigned time;
 
-	unsigned long lastPlotTime = millis();
-	unsigned long oldtime = millis();
+		activateTempFeedback()	//lock temperature just as a default.
 
-	float avgTemp = NAN;
-	unsigned time;
 	while(true){
 
+		//either lock the eom or ram depending on what we want.
 		if( eom.lockbox.locked ){
-			avgTemp = eom.lock();	
+			avgTemp = eom.lock();	//eom.lock() measures for a long time then returns the average
+			                     	//temperature	
 		} else if (ram.lockbox.locked) {
 			ram.lock();	
 		}
 
-		if(!isnan(avgTemp)){
-			EOMtemps[i] = avgTemp;
-			times[i] = millis()/1000.;
-			outputs[i] = eom.lockbox.output;
-			i = (i + 1) % DATAPOINTS;
+		//only log temperature if we measured it.
+			if(!isnan(avgTemp)){
 
-			//log data to sd card
-			String dataString = "";
+				EOMtemps[i] = avgTemp;
+				times[i] = millis()/1000.;	//this will wrap around in 50? days?
+				outputs[i] = eom.lockbox.output;
+				i = (i + 1) % DATAPOINTS;
 
-			dataString += times[(i-1+DATAPOINTS)%DATAPOINTS];
-			dataString += '\t';
-			dataString += avgTemp;
+				//log data to sd card
+					String dataString = "";
 
-			File dataFile = SD.open("eomtemp.txt", FILE_WRITE);
+					dataString += times[(i-1+DATAPOINTS)%DATAPOINTS];
+					dataString += '\t';
+					dataString += avgTemp;
 
-			  // if the file is available, write to it:
-			if (dataFile) {
-			    dataFile.println(dataString);
-			    dataFile.close();
+					File dataFile = SD.open("eomtemp.txt", FILE_WRITE);
+
+					// if the file is available, write to it:
+						if (dataFile) {
+						    dataFile.println(dataString);
+						    dataFile.close();
+						}
+
+				avgTemp = NAN;
 			}
-		}
 
-		//plot every second
-		if(millis() - lastPlotTime > 1000){
-			lastPlotTime = millis();
-			tecPlt.plotData(0, times, outputs, DATAPOINTS);
-			plt.plotData(0, times, EOMtemps, DATAPOINTS);
-			plt.drawGraph();
-			tecPlt.drawGraph();
-		}
+		//update plot every second only.
+			if(millis() - lastPlotTime > 1000){
+				lastPlotTime = millis();
+				tecPlt.plotData(0, times, outputs, DATAPOINTS);
+				plt.plotData(0, times, EOMtemps, DATAPOINTS);
+				plt.drawGraph();
+				tecPlt.drawGraph();
+			}
 			
-		//access settings menu
-		char key = keypad.getKey();
-		if(key){
-			lcd.setFont();
-			settings.ui();
-			oldtime = millis(); // don't integrate for the huge time we were in menu.
-			cls();
-			printHeader();
-		}
+		//access settings menu if key is pressed
+			char key = keypad.getKey();
+			if(key){
+				lcd.setFont();
+				settings.ui();
+				oldtime = millis(); // don't integrate for the huge time we were in menu.
+				cls();
+				printHeader();
+			}
 	}
 }
 
