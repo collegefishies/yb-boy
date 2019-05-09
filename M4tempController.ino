@@ -1,20 +1,15 @@
-/*  menu.ino --- this is a menu cpp
+/*  M4tempController.ino
  *  ===============================
- *  this is intended to be the top 
- *  level file. add functions via .h
- *  files.
- * 
- *  To add your own custom function just 
- *  add a title to menuItems, increase PROGS by 1
- *  and add your void foo() function to menuProgs.
+ *  
  */
 
 
-//include your LCD libraries
+//low level software
 #include "lcd.h"    //includes lcd class for screen communication
 #include "input.h"  //includes keypad inputs
 #include "menu.h"
 
+//progs
 #include "bitArray.h"
 #include "graph.h"
 #include "temperatureController.h"
@@ -24,86 +19,108 @@
 #include "ramSettings.h"
 #include "eomSettings.h"
 
-#define PROGS 4
-#define DATAPOINTS 500
 
-float EOMtemps[DATAPOINTS] = {0};
-float FiberErrors[DATAPOINTS] = {0};
-float times[DATAPOINTS] = {0};
-float outputs[DATAPOINTS] = {0};
+/***** Global Variables ********/
+	//global variables
+		#define PROGS 4       	//number of programs in the settings menu
+		#define DATAPOINTS 500	//the number of datpoints we hold for the graph.
 
-RTC_Millis rtc;
-temperatureController::GeneralController ram;
-temperatureController::TemperatureController eom;
+	//vars for holding data to plot
+		float EOMtemps[DATAPOINTS] = {0};
+		float FiberErrors[DATAPOINTS] = {0};
+		float times[DATAPOINTS] = {0};
+		float outputs[DATAPOINTS] = {0};
 
-void printTime();
-void printHeader();
-void printFreeRam(){
-	lcd.println("Free RAM is: ");
-	lcd.println(freeMemory());
-	wait();
-}
+	//temperature controllers and time keeper objects
+		RTC_Millis rtc;
+		temperatureController::GeneralController ram;
+		temperatureController::TemperatureController eom;
+
+/******** Settings Menu Things ***************/
+
+	//menu object for the settings menu
+		menu settings;
+
+	//helper functions for cleaner code
+		void printTime();
+		void printHeader();
+		void printFreeRam(){
+			lcd.println("Free RAM is: ");
+			lcd.println(freeMemory());
+			wait();
+		}
+
+	//functions to be called in the settings menu.
+		void printEOMsettings(){eomSettings.ui();}
+		void printRamSettings(){ramSettings.ui();}
+		void activateRAMfeedback(){
+			ram.lockbox.integral = 0;
+			ram.lockbox.outputOffset = eom.lockbox.output; 
+			eom.lockbox.locked = false; 
+			ram.lockbox.locked = true;
+		}
+		void activateTempFeedback(){eom.lockbox.locked = true; ram.lockbox.locked = false;}
+
+	//names of the settings menu items
+		String settingsItems[PROGS] = {
+			"Temperature Feedback Settings",
+			"DC RAM Settings",
+			"Switch to RAM feedback",
+			"Switch to Temp. feedback"
+		};
+	//program array for the settings menu
+		void (*settingsProgs[PROGS])() = {
+			printEOMsettings,
+			printRamSettings,
+			activateRAMfeedback,
+			activateTempFeedback
+		};
 
 
-menu settings;
-
-void printEOMsettings(){eomSettings.ui();}
-void printRamSettings(){ramSettings.ui();}
-void activateRAMfeedback(){
-	ram.lockbox.integral = 0;
-	ram.lockbox.outputOffset = eom.lockbox.output; 
-	eom.lockbox.locked = false; 
-	ram.lockbox.locked = true;
-}
-void activateTempFeedback(){eom.lockbox.locked = true; ram.lockbox.locked = false;}
-
-String settingsItems[PROGS] = {
-	"Temperature Feedback Settings",
-	"DC RAM Settings",
-	"Switch to RAM feedback",
-	"Switch to Temp. feedback"
-};
-
-void (*settingsProgs[PROGS])() = {
-	printEOMsettings,
-	printRamSettings,
-	activateRAMfeedback,
-	activateTempFeedback
-};
-
-
+/******* begin main ************/
+/******* begin main ************/
+/******* begin main ************/		
 
 void setup() {
 	lcd_initialize();
 
-	settings.loop = false;
-	settings.defineTitle("---menu---");
-	settings.defineMenuItems(settingsItems,PROGS);
-	settings.defineMenuProgs(settingsProgs,PROGS);
+	/******* Menu Initializations **********/
+
+	settings.loop = false;                        	//define settings to quit once we call a function
+	                                              	//this is so we return automatically to the graph
+	settings.defineTitle("---menu---");           	//title
+	settings.defineMenuItems(settingsItems,PROGS);	//define items
+	settings.defineMenuProgs(settingsProgs,PROGS);	// "        "
 
 	
-	eomSettings.loop = false;
+	eomSettings.loop = false;	//same as for settings
 	eomSettings.defineTitle("-Temperature Lock Sett's-");
 	eomSettings.defineMenuItems(eomMenu::settingsItems,EOMPROGS);
 	eomSettings.defineMenuProgs(eomMenu::settingsProgs,EOMPROGS);
 
-	ramSettings.loop = false;
+	ramSettings.loop = false;	//same as for settings
 	ramSettings.defineTitle("-Temperature Lock Sett's-");
 	ramSettings.defineMenuItems(ramMenu::settingsItems,RAMPROGS);
 	ramSettings.defineMenuProgs(ramMenu::settingsProgs,RAMPROGS);
 
-	eom.setVoltage(3.3); 
-	ram.setVoltage(3.3);
-	eom.setResolution(12);
-	ram.setResolution(12);
 
-	eom.thermistor.setResistorDivider(2.49e3);
-	eom.thermistor.setThermistorValue(10e3);
+	/****** Temperature/RAM Controller Settings *********/
 
-	ram.thermistor.setAnalogPin(A2);
-	eom.thermistor.setAnalogPin(A3);
-	ram.tec.setAnalogPin(A1);
-	eom.tec.setAnalogPin(A1);
+	eom.setVoltage(3.3);  	//define the board voltage to be 3.3V so it correctly outputs the right value.
+	ram.setVoltage(3.3);  	//
+	eom.setResolution(12);	//set the AnalogDAC and ADC resolution to be 12bits
+	ram.setResolution(12);	//
+
+	eom.thermistor.setResistorDivider(2.49e3);	//Set the value of the top resistor value in the voltage divider
+	eom.thermistor.setThermistorValue(10e3);  	//set the 25C temperature of the thermistor for correct temperature
+	                                          	//calculations
+
+	ram.thermistor.setAnalogPin(A2);	//set the ADC pin for the ram.thermistor
+	eom.thermistor.setAnalogPin(A3);	//set the ADC pin for the eom.thermistor
+	ram.tec.setAnalogPin(A1);       	//set the DAC pin for the ram compensation
+	eom.tec.setAnalogPin(A1);       	//set DAC for EOM, note it's the same pin! because both 
+	                                	//feedback mechanisms are the same! they don't interfere.
+
 
 
 	//set pins 
@@ -147,18 +164,15 @@ void loop() {
 	unsigned long lastPlotTime = millis();
 	unsigned long oldtime = millis();
 
-	float avgTemp;
+	float avgTemp = NAN;
 	unsigned time;
 	while(true){
-		
-		//print time every second
-		if ( (rtc.now() - oldPrintTime).seconds() >= 1){
-			// eraseTime(); printTime();  oldPrintTime = rtc.now();
-		} 
 
-		avgTemp = eom.lock();
-		ram.lock();
-
+		if( eom.lockbox.locked ){
+			avgTemp = eom.lock();	
+		} else if (ram.lockbox.locked) {
+			ram.lock();	
+		}
 
 		if(!isnan(avgTemp)){
 			EOMtemps[i] = avgTemp;
@@ -203,13 +217,15 @@ void loop() {
 	}
 }
 
-void printHeader(){
-	lcd.setCursor(0,0);
-	GFXfont *oldFont = lcd.getFont();
-	lcd.setFont(&Picopixel);
-	lcd.setTextColor(ST7735_GREEN);
-	lcd.println("1157nm Clock Laser RAM Controller");
-	lcd.setTextColor(ST7735_WHITE);
-	lcd.println("Press any key for menu.");
-	lcd.setFont(oldFont);
-}
+
+/******* Helper Functions  ************/
+	void printHeader(){
+		lcd.setCursor(0,0);
+		GFXfont *oldFont = lcd.getFont();
+		lcd.setFont(&Picopixel);
+		lcd.setTextColor(ST7735_GREEN);
+		lcd.println("1157nm Clock Laser RAM Controller");
+		lcd.setTextColor(ST7735_WHITE);
+		lcd.println("Press any key for menu.");
+		lcd.setFont(oldFont);
+	}
