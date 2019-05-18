@@ -61,11 +61,14 @@ namespace temperatureController {
 			float roomResistance;
 			float intVal;
 			int resolution;
-			
-		public:			
+			float averagedVoltage;
+			unsigned int lastMeasureTime;
+			unsigned int avgNo;
+
+		public:
 
 			//definer functions
-			void init(){pin = VCC = resistance = roomResistance = intVal = resolution = 0;}
+			void init(){pin = VCC = resistance = roomResistance = intVal = resolution = lastMeasureTime = avgNo = averagedVoltage = 0;}
 			void setResolution(unsigned int res){resolution = res; analogReadResolution(resolution);}
 			void setAnalogPin(unsigned int analogPin){pin = analogPin; update();}
 			void setVoltage(float voltage);  	//set voltage driving voltage divider.
