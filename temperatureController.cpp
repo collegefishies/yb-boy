@@ -19,6 +19,10 @@ float GeneralController::lock(){
 		//measure
 		averageVoltage = thermistor.getAverageVoltage(averageNumber,feedbackTime*1000);
 
+		if(isnan(averageVoltage)){
+			return NAN;
+		}
+
 		//feed to PI
 		lockbox.input = averageVoltage;
 
@@ -29,7 +33,7 @@ float GeneralController::lock(){
 		return averageVoltage;
 	} else {
 		//return nans if feedback didn't occur.
-		return pow(-1,.5);
+		return NAN;
 	}
 }
 
@@ -55,6 +59,11 @@ float TemperatureController::lock(){
 		//measure
 		averageTemperature = thermistor.getAverageTemperature(averageNumber,feedbackTime*1000);
 
+		if(isnan(averageTemperature)){
+			//return nan as average isn't done yet.
+			return NAN;
+		}
+
 		//feed to PI
 		lockbox.input = averageTemperature;
 
@@ -65,7 +74,7 @@ float TemperatureController::lock(){
 		return averageTemperature;
 	} else {
 		//return nans if feedback didn't occur.
-		return pow(-1,.5);
+		return NAN;
 	}
 }
 
@@ -263,13 +272,22 @@ bool TemperatureController::saveConfig(String fname){
 		}
 
 	float Thermistor::getAverageVoltage(int averages, int integrationTime){
-		float averagedVoltage = 0;
-		for(int i = 0; i < averages; i++){
+		//non blocking averager
+
+		//loop using class variables.
+		if(avgNo < averages && (millis()-lastMeasureTime) > (integrationTime/averages)){
+			lastMeasureTime = millis();
 			averagedVoltage += getVoltage();
-			delay(integrationTime/averages);
+			avgNo += 1;
+		} else if (avgNo == averages){
+			//reset class variables and spit out average
+			averagedVoltage = 0;
+			avgNo = 0;
+			averagedVoltage = averagedVoltage/averages;
+			return averagedVoltage;
 		}
-		averagedVoltage = averagedVoltage/averages;
-		return averagedVoltage;
+
+		return NAN;
 	}
 	
 	float Thermistor::getResistance(){
@@ -280,30 +298,42 @@ bool TemperatureController::saveConfig(String fname){
 		if (measuredResistance < 100*resistance){
 			return measuredResistance;
 		} else {
-			return -1;
+			return NAN;
 		}
 	};
 
 	float Thermistor::getAverageResistance(int averages, int integrationTime){
 		float measuredResistance;
 		float measuredVoltage = getAverageVoltage(averages,integrationTime);
+		
+		//return nan if non blocking average isn't done.
+		if(isnan(measuredVoltage)){
+			return NAN;
+		}
+
 		measuredResistance = resistance*measuredVoltage /(VCC - measuredVoltage);
 
 		if (measuredResistance < 100*resistance){
 			return measuredResistance;
 		} else {
-			return -1;
+			return NAN;
 		}
 
 };
 	
 	float Thermistor::getAverageTemperature(int averages, int waitTime){
 			 float averageResistance = getAverageResistance(averages,waitTime);
+			 
+			 if(isnan(averageResistance)){
+				//return nan if blocking average wasn't done.
+				return NAN;
+			 }
+
 			 float RtR = averageResistance / roomResistance;
 			 const float T0 = 273.15;
 
 			 if (averageResistance > 100*resistance){
-				return -1;
+				return NAN;
 			 }
 
 			 float T;
