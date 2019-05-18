@@ -220,6 +220,7 @@ void loop() {
 			                     	//temperature	
 		} else if (ram.lockbox.locked) {
 			ram.lock();	
+			float avgTemp = thermistor.getAverageTemperature(averageNumber,3000); //average for three seconds.
 		}
 
 		//only log temperature if we measured it.
