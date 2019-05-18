@@ -31,10 +31,10 @@
 		#define SWITCHPIN  A5
 
 	//vars for holding data to plot
-		float EOMtemps[DATAPOINTS] = {NAN};
-		float FiberErrors[DATAPOINTS] = {NAN};
-		float times[DATAPOINTS] = {NAN};
-		float outputs[DATAPOINTS] = {NAN};
+		float EOMtemps[DATAPOINTS] = {0};
+		float FiberErrors[DATAPOINTS] = {0};
+		float times[DATAPOINTS] = {0};
+		float outputs[DATAPOINTS] = {0};
 
 	//temperature controllers and time keeper objects
 		RTC_Millis rtc;
@@ -157,6 +157,7 @@ void setup() {
 	ram.tec.setAnalogPin(A1);       	//set the DAC pin for the ram compensation
 	eom.tec.setAnalogPin(A1);       	//set DAC for EOM, note it's the same pin! because both 
 	                                	//feedback mechanisms are the same! they don't interfere.
+	pinMode(SWITCHPIN, INPUT);
 
 	/******* Load SD Card and print Info! ************/
 
@@ -173,6 +174,8 @@ void setup() {
 		lcd.println("Loaded config! Success!");
 	}
 	wait();	//begin
+
+	activateTempFeedback();	//lock temperature just as a default.
 }
 
 
@@ -208,15 +211,14 @@ void loop() {
 		float avgTemp = NAN;
 		unsigned time;
 
-		activateTempFeedback();	//lock temperature just as a default.
+		
 
 	while(true){
-
 		//either lock the eom or ram depending on what we want.
 		if( eom.lockbox.locked && digitalRead(SWITCHPIN)){
 			avgTemp = eom.lock();	//eom.lock() measures for a long time then returns the average
 			                     	//temperature	
-		} else if (ram.lockbox.locked && digitalRead(SWITCHPIN)) {
+		} else if (ram.lockbox.locked) {
 			ram.lock();	
 		}
 
@@ -269,6 +271,7 @@ void loop() {
 
 			}
 	}
+	
 }
 
 
