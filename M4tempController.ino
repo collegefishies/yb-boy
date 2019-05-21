@@ -25,7 +25,6 @@
 
 /***** Global Variables ********/
 	//global variables
-		#define LOGICPIN      	//pin where we read in whether or not we lock
 		#define PROGS 6       	//number of programs in the settings menu
 		#define DATAPOINTS 500	//the number of datpoints we hold for the graph.
 		#define SWITCHPIN  A5
@@ -239,7 +238,6 @@ void loop() {
 		if( eom.lockbox.locked && digitalRead(SWITCHPIN)){
 			avgTemp = eom.lock();	//eom.lock() measures for a long time then returns the average
 			                     	//temperature	 
-
 		} else if (ram.lockbox.locked && digitalRead(SWITCHPIN)) {
 			ramVoltage = ram.lock();
 			avgTemp = eom.thermistor.getAverageTemperature(eom.averageNumber,3000); //average for three seconds.
@@ -253,7 +251,11 @@ void loop() {
 			if(!isnan(avgTemp)){
 				EOMtemps[i] = avgTemp;
 				times[i] = millis()/1000.;	//this will wrap around in 50? days?
-				outputs[i] = eom.lockbox.output;
+				if(eom.lockbox.locked && digitalRead(SWITCHPIN)){
+					outputs[i] = eom.lockbox.output;
+				} else if (ram.lockbox.locked && digitalRead(SWITCHPIN)){
+					outputs[i] = ram.lockbox.output;
+				}
 				i = (i + 1) % DATAPOINTS;
 
 				//log data to sd card
@@ -281,7 +283,6 @@ void loop() {
 			if(!isnan(ramVoltage)){
 				RAMvoltages[j] = ramVoltage;
 				RAMtimes[j] = millis()/1000.;	//this will wrap around in 50? days?
-				
 				j = (j + 1) % DATAPOINTS;
 
 				//log data to sd card
