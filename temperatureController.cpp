@@ -61,7 +61,7 @@ float TemperatureController::lock(){
 
 		if(isnan(averageTemperature)){
 			//return nan as average isn't done yet.
-			tec.setVoltage(lockbox.output);
+			// tec.setVoltage(lockbox.output);
 			return NAN;
 		}
 
