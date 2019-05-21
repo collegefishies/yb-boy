@@ -120,7 +120,7 @@
 
 void setup() {
 	lcd_initialize();
-
+	
 	/******* Menu Initializations **********/
 
 	settings.loop = false;                        	//define settings to quit once we call a function
@@ -169,9 +169,14 @@ void setup() {
 	}
 
 	if(false == eom.loadConfig(EOMBAK)){            //check to see if we have settings backed up.
-		lcd.println("Failed to load config.");
+		lcd.println("Failed to load TEMP config.");
 	} else {
-		lcd.println("Loaded config! Success!");
+		lcd.println("Loaded TEMP config!");
+	}
+	if(false == ram.loadConfig(RAMBAK)){            //check to see if we have settings backed up.
+		lcd.println("Failed to load RAM config.");
+	} else {
+		lcd.println("Loaded RAM config!");
 	}
 	wait();	//begin
 
@@ -184,6 +189,7 @@ DateTime oldPrintTime;
 void loop() {
 	cls();	//clear the screen
 	printHeader();
+	printMode();
 	
 	//define graph objects, and their plotting area
 		graph plt(0,3*CHARH,lcd.width(),2*CHARH + lcd.height()/2);
@@ -214,18 +220,23 @@ void loop() {
 		
 
 	while(true){
+		printMode();
 		//either lock the eom or ram depending on what we want.
 		if( eom.lockbox.locked && digitalRead(SWITCHPIN)){
 			avgTemp = eom.lock();	//eom.lock() measures for a long time then returns the average
 			                     	//temperature	
-		} else if (ram.lockbox.locked) {
+
+		} else if (ram.lockbox.locked && digitalRead(SWITCHPIN)) {
 			ram.lock();	
 			avgTemp = eom.thermistor.getAverageTemperature(eom.averageNumber,3000); //average for three seconds.
+		} else if (!digitalRead(SWITCHPIN)){
+			avgTemp = eom.thermistor.getAverageTemperature(eom.averageNumber,3000);
 		}
+
+
 
 		//only log temperature if we measured it.
 			if(!isnan(avgTemp)){
-
 				EOMtemps[i] = avgTemp;
 				times[i] = millis()/1000.;	//this will wrap around in 50? days?
 				outputs[i] = eom.lockbox.output;
@@ -238,7 +249,7 @@ void loop() {
 					dataString += '\t';
 					dataString += avgTemp;
 
-					File dataFile = SD.open("eomtemp.txt", FILE_WRITE);
+					File dataFile = SD.open("eomtemp.txt", O_WRITE | O_APPEND | O_CREAT);
 
 					// if the file is available, write to it:
 						if (dataFile) {
@@ -268,8 +279,9 @@ void loop() {
 				settings.ui();
 				oldtime = millis(); // don't integrate for the huge time we were in menu.
 				cls();
+			
 				printHeader();
-
+				printMode();
 			}
 	}
 	
@@ -277,13 +289,30 @@ void loop() {
 
 
 /******* Helper Functions  ************/
+	void printMode(){
+		lcd.setFont();
+
+		int x0,y0;
+		x0 = lcd.getCursorX(); y0 = lcd.getCursorY();
+
+		lcd.setCursor(lcd.width() - 3*CHARW, 0);
+		lcd.fillRect(lcd.width()-3*CHARW,0,3*CHARW,CHARH, BACKGROUND);
+		if( eom.lockbox.locked && digitalRead(SWITCHPIN)){
+			lcd.print("TMP");
+		} else if (ram.lockbox.locked && digitalRead(SWITCHPIN)) {
+			lcd.print("RAM");
+		} else if (!digitalRead(SWITCHPIN)){
+			lcd.print("LOG");
+		}
+		lcd.setCursor(x0,y0);
+	}
 	void printHeader(){
 		lcd.setCursor(0,0);
 		GFXfont *oldFont = lcd.getFont();
 		lcd.setFont(&Picopixel);
 		lcd.setTextColor(ST7735_GREEN);
-		lcd.println("1157nm Clock Laser RAM Controller");
+		lcd.println("1157nm RAM Controller");
 		lcd.setTextColor(ST7735_WHITE);
-		lcd.println("Press any key for menu. * to re-loop.");
+		lcd.println("Any=MENU *=RST");
 		lcd.setFont(oldFont);
 	}

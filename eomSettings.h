@@ -38,7 +38,7 @@ void setVar(float& x, String prompt){
 void setFeedbackTime(){setEomVar(eom.feedbackTime, "Input feedback time:\n");}
 void setG(){setEomVar(eom.lockbox.G, "Input G:\n");}
 void setP(){setEomVar(eom.lockbox.P, "Input P:\n");}
-void setI(){setEomVar(eom.lockbox.I, "Input I (1/s):\n");}
+void setI(){setEomVar(eom.lockbox.I, "Input I (1/s):\n"); eom.lockbox.integral = 0;}
 void setSetpoint(){setEomVar(eom.lockbox.setpoint, "Input setpoint (C):\n");};
 void setOutputOffset(){setEomVar(eom.lockbox.outputOffset, "Input outputOffset:\n");}
 
