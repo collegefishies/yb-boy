@@ -190,7 +190,7 @@ DateTime oldPrintTime;
 void loop() {
 	cls();	//clear the screen
 	printHeader();
-	printMode();
+	printMode(true);
 	
 	//define graph objects, and their plotting area
 		graph plt(0,3*CHARH,lcd.width(),2*CHARH + lcd.height()/2);
@@ -221,11 +221,11 @@ void loop() {
 		
 
 	while(true){
-		printMode();
+		printMode(false);
 		//either lock the eom or ram depending on what we want.
 		if( eom.lockbox.locked && digitalRead(SWITCHPIN)){
 			avgTemp = eom.lock();	//eom.lock() measures for a long time then returns the average
-			                     	//temperature	
+			                     	//temperature	 
 
 		} else if (ram.lockbox.locked && digitalRead(SWITCHPIN)) {
 			ram.lock();	
@@ -298,7 +298,7 @@ void loop() {
 				cls();
 			
 				printHeader();
-				printMode();
+				printMode(true);
 			}
 	}
 	
@@ -306,8 +306,11 @@ void loop() {
 
 
 /******* Helper Functions  ************/
-	void printMode(){
+	void printMode(bool hard){
 		static int mode;
+		if(hard){
+			mode = -1;
+		}
 
 		lcd.setFont();
 
@@ -316,7 +319,7 @@ void loop() {
 
 		
 		if( eom.lockbox.locked && digitalRead(SWITCHPIN)){
-			if(mode != 1){
+			if(mode != 1 ){
 				mode = 1;
 				
 				lcd.setCursor(lcd.width() - 3*CHARW, 0);
