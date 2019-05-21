@@ -95,6 +95,7 @@ namespace temperatureController {
 
 		unsigned long lastLockTime;
 		float feedbackTime;
+		float averageReading;
 		unsigned int averageNumber;
 
 		TemperatureController();

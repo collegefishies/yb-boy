@@ -11,26 +11,31 @@ namespace temperatureController{
  */
 
 float GeneralController::lock(){
-	float averageVoltage;
+	//measure continously
+	float tempVoltage = thermistor.getAverageVoltage(averageNumber,feedbackTime*1000);;
+
+	//only update class variable iff the measurement is real.
+	if(!isnan(tempVoltage)){
+		averageReading = tempVoltage;
+	}
+
+
 	if((micros() - lastLockTime)/1.e6 >= feedbackTime){
-		lockbox.dt = (micros() - lastLockTime)/1.e6;
-		lastLockTime = micros();
-
-		//measure
-		averageVoltage = thermistor.getAverageVoltage(averageNumber,feedbackTime*1000);
-
-		if(isnan(averageVoltage)){
+		if(isnan(averageReading)){
 			return NAN;
 		}
 
+		lockbox.dt = (micros() - lastLockTime)/1.e6;
+		lastLockTime = micros();
+
 		//feed to PI
-		lockbox.input = averageVoltage;
+		lockbox.input = averageReading;
 
 		//feedback
 		lockbox.feedback();
 		tec.setVoltage(lockbox.output);
 
-		return averageVoltage;
+		return averageReading;
 	} else {
 		//return nans if feedback didn't occur.
 		return NAN;
@@ -43,6 +48,7 @@ float GeneralController::lock(){
 
 TemperatureController::TemperatureController(){
 	lockbox.init(); tec.init(); thermistor.init(); 
+	averageReading = NAN;
 	averageNumber = 100; lastLockTime = micros(); feedbackTime = 0;
 }
 
@@ -51,28 +57,31 @@ TemperatureController::TemperatureController(String name){
 }
 
 float TemperatureController::lock(){
-	float averageTemperature;
+	//measure continously
+	float tempTemperature = thermistor.getAverageTemperature(averageNumber,feedbackTime*1000);
+
+	//only update class variable iff the measurement is real.
+	if(!isnan(tempTemperature)){
+		averageReading = tempTemperature;
+	}
+
 	if((micros() - lastLockTime)/1.e6 >= feedbackTime){
-		lockbox.dt = (micros() - lastLockTime)/1.e6;
-		lastLockTime = micros();
-
-		//measure
-		averageTemperature = thermistor.getAverageTemperature(averageNumber,feedbackTime*1000);
-
-		if(isnan(averageTemperature)){
+		if(isnan(averageReading)){
 			//return nan as average isn't done yet.
-			// tec.setVoltage(lockbox.output);
 			return NAN;
 		}
 
+		lockbox.dt = (micros() - lastLockTime)/1.e6;
+		lastLockTime = micros();
+
 		//feed to PI
-		lockbox.input = averageTemperature;
+		lockbox.input = averageReading;
 
 		//feedback
 		lockbox.feedback();
 		tec.setVoltage(lockbox.output);
 
-		return averageTemperature;
+		return averageReading;
 	} else {
 		//return nans if feedback didn't occur.
 		return NAN;
@@ -285,7 +294,7 @@ bool TemperatureController::saveConfig(String fname){
 			lastMeasureTime = millis();
 			averagedVoltage += getVoltage();
 			avgNo += 1;
-			// Serial.println(averageVoltage);
+			// Serial.println(averageReading);
 		} else if (avgNo == averages){
 			//reset class variables and spit out average
 
