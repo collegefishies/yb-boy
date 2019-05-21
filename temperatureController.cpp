@@ -150,6 +150,7 @@ bool TemperatureController::loadConfig(String fname){
 		lockbox.outputOffset	= doc["outputOffset"];
 		lockbox.setpoint    	= doc["setpoint"]    ;
 		lockbox.integral    	= doc["integral"]    ;
+		feedbackTime        	= doc["feedbackTime"];
 
 		iofile.close();
 		return true;
@@ -224,6 +225,7 @@ bool TemperatureController::saveConfig(String fname){
 		doc["outputOffset"]	= lockbox.outputOffset;
 		doc["setpoint"]    	= lockbox.setpoint;
 		doc["integral"]    	= lockbox.integral;
+		doc["feedbackTime"] = feedbackTime;
 
 		if(serializeJson(doc,iofile) == 0){
 			lcd.println("Failed to write file.");
