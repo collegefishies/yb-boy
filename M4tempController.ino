@@ -120,6 +120,7 @@
 
 void setup() {
 	lcd_initialize();
+	Serial.begin(9600);
 	
 	/******* Menu Initializations **********/
 
@@ -250,12 +251,28 @@ void loop() {
 					dataString += avgTemp;
 
 					File dataFile = SD.open("eomtemp.txt", O_WRITE | O_APPEND | O_CREAT);
-
 					// if the file is available, write to it:
 						if (dataFile) {
+							Serial.print("Writing: ");
+							Serial.println(dataString);
 						    dataFile.println(dataString);
 						    dataFile.close();
+						} else {
+							Serial.println("Error writing to eomtemp.txt");
 						}
+
+
+					// dataFile = SD.open("eomtemp.txt", O_READ);
+					// if(dataFile){
+					//	Serial.println("Reading File")
+					//	while (dataFile.available()) {
+					//		 Serial.write(dataFile.read());
+					//	}
+					//	dataFile.close();
+					// } else {
+					//	Serial.println("Error reading eomtemp.txt");
+					// }
+					
 
 				avgTemp = NAN;
 			}
@@ -290,19 +307,39 @@ void loop() {
 
 /******* Helper Functions  ************/
 	void printMode(){
+		static int mode;
+
 		lcd.setFont();
 
 		int x0,y0;
 		x0 = lcd.getCursorX(); y0 = lcd.getCursorY();
 
-		lcd.setCursor(lcd.width() - 3*CHARW, 0);
-		lcd.fillRect(lcd.width()-3*CHARW,0,3*CHARW,CHARH, BACKGROUND);
+		
 		if( eom.lockbox.locked && digitalRead(SWITCHPIN)){
-			lcd.print("TMP");
+			if(mode != 1){
+				mode = 1;
+				
+				lcd.setCursor(lcd.width() - 3*CHARW, 0);
+				lcd.fillRect(lcd.width()-3*CHARW,0,3*CHARW,CHARH, BACKGROUND);
+				lcd.print("TMP");
+			}
 		} else if (ram.lockbox.locked && digitalRead(SWITCHPIN)) {
-			lcd.print("RAM");
+			if(mode != 2){
+				mode = 2;
+				
+				lcd.setCursor(lcd.width() - 3*CHARW, 0);
+				lcd.fillRect(lcd.width()-3*CHARW,0,3*CHARW,CHARH, BACKGROUND);
+				lcd.print("RAM");
+			}
+
 		} else if (!digitalRead(SWITCHPIN)){
-			lcd.print("LOG");
+			if(mode != 3){
+				mode = 3;
+				
+				lcd.setCursor(lcd.width() - 3*CHARW, 0);
+				lcd.fillRect(lcd.width()-3*CHARW,0,3*CHARW,CHARH, BACKGROUND);
+				lcd.print("LOG");
+			}
 		}
 		lcd.setCursor(x0,y0);
 	}
