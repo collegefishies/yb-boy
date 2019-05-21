@@ -273,18 +273,23 @@ bool TemperatureController::saveConfig(String fname){
 
 	float Thermistor::getAverageVoltage(int averages, int integrationTime){
 		//non blocking averager
-
+		
 		//loop using class variables.
 		if(avgNo < averages && (millis()-lastMeasureTime) > (integrationTime/averages)){
+			// Serial.print("AvgNo: ");
+			// Serial.print(avgNo);
+			// Serial.print(" RunningAvg = ");
 			lastMeasureTime = millis();
 			averagedVoltage += getVoltage();
 			avgNo += 1;
+			// Serial.println(averageVoltage);
 		} else if (avgNo == averages){
 			//reset class variables and spit out average
+
+			float tempAverage = averagedVoltage/averages;
 			averagedVoltage = 0;
 			avgNo = 0;
-			averagedVoltage = averagedVoltage/averages;
-			return averagedVoltage;
+			return tempAverage;
 		}
 
 		return NAN;
