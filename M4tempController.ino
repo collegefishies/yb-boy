@@ -32,8 +32,10 @@
 
 	//vars for holding data to plot
 		float EOMtemps[DATAPOINTS] = {0};
+		float RAMvoltages[DATAPOINTS] = {0};
 		float FiberErrors[DATAPOINTS] = {0};
 		float times[DATAPOINTS] = {0};
+		float RAMtimes[DATAPOINTS] = {0};
 		float outputs[DATAPOINTS] = {0};
 
 	//temperature controllers and time keeper objects
@@ -194,7 +196,8 @@ void loop() {
 	
 	//define graph objects, and their plotting area
 		graph plt(0,3*CHARH,lcd.width(),2*CHARH + lcd.height()/2);
-		graph tecPlt(0,2*CHARH + lcd.height()/2, lcd.width(), lcd.height());
+		graph tecPlt(0,2*CHARH + lcd.height()/2, lcd.width()/2, lcd.height());
+		graph ramPlt(lcd.width()/2,2*CHARH + lcd.height()/2, lcd.width(), lcd.height());
 		
 		
 	//temperature plot settings 
@@ -209,13 +212,23 @@ void loop() {
 		tecPlt.setYtics(3);
 		tecPlt.makeGrid();
 		tecPlt.makeAxes();
+		tecPlt.setXtics(3);
+	//RAM output plot settings
+		ramPlt.setBoundary(10);
+		ramPlt.setYtics(3);
+		ramPlt.setXtics(3);
+		ramPlt.makeGrid();
+		ramPlt.makeAxes();
+
 
 
 	//declare variables for looping application
 		int i = 0;
+		int j = 0;
 		unsigned long lastPlotTime = millis();
 		unsigned long oldtime = millis();
 		float avgTemp = NAN;
+		float ramVoltage = NAN;
 		unsigned time;
 
 		
@@ -228,7 +241,7 @@ void loop() {
 			                     	//temperature	 
 
 		} else if (ram.lockbox.locked && digitalRead(SWITCHPIN)) {
-			ram.lock();	
+			ramVoltage = ram.lock();
 			avgTemp = eom.thermistor.getAverageTemperature(eom.averageNumber,3000); //average for three seconds.
 		} else if (!digitalRead(SWITCHPIN)){
 			avgTemp = eom.thermistor.getAverageTemperature(eom.averageNumber,3000);
@@ -261,29 +274,46 @@ void loop() {
 							Serial.println("Error writing to eomtemp.txt");
 						}
 
-
-					// dataFile = SD.open("eomtemp.txt", O_READ);
-					// if(dataFile){
-					//	Serial.println("Reading File")
-					//	while (dataFile.available()) {
-					//		 Serial.write(dataFile.read());
-					//	}
-					//	dataFile.close();
-					// } else {
-					//	Serial.println("Error reading eomtemp.txt");
-					// }
-					
-
 				avgTemp = NAN;
+			}
+
+		//only log RAM if we measured it.
+			if(!isnan(ramVoltage)){
+				RAMvoltages[j] = ramVoltage;
+				RAMtimes[j] = millis()/1000.;	//this will wrap around in 50? days?
+				
+				j = (j + 1) % DATAPOINTS;
+
+				//log data to sd card
+					String dataString = "";
+
+					dataString += RAMtimes[(j-1+DATAPOINTS)%DATAPOINTS];
+					dataString += '\t';
+					dataString += String(ramVoltage,4);
+
+					File dataFile = SD.open("ramvals.txt", O_WRITE | O_APPEND | O_CREAT);
+					// if the file is available, write to it:
+						if (dataFile) {
+							Serial.print("Writing: ");
+							Serial.println(dataString);
+						    dataFile.println(dataString);
+						    dataFile.close();
+						} else {
+							Serial.println("Error writing to ramvals.txt");
+						}
+						
+				ramVoltage = NAN;
 			}
 
 		//update plot every second only.
 			if(millis() - lastPlotTime > 1000){
 				lastPlotTime = millis();
 				tecPlt.plotData(0, times, outputs, DATAPOINTS);
+				ramPlt.plotData(0, RAMtimes, RAMvoltages, DATAPOINTS);
 				plt.plotData(0, times, EOMtemps, DATAPOINTS);
 				plt.drawGraph();
 				tecPlt.drawGraph();
+				ramPlt.drawGraph();
 			}
 			
 		//access settings menu if key is pressed
