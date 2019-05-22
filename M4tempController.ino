@@ -26,7 +26,7 @@
 #include "temperatureController.h"	//holds the object classes that do the controlling
 //#include <RTClib.h>             	//a class for interfacing with external/internal real time clocks
 #include <math.h>                 	
-//#include "MemoryFree.h"         	//a class for checking ram.
+#include "MemoryFree.h"           	//a class for checking ram.
 
 #include "ramSettings.h"	//header file to wrap ramSettings menu.
 #include "eomSettings.h"	//need to put into it's own class eventually...
