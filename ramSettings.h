@@ -40,7 +40,7 @@ void setFeedbackTime(){setRamVar(ram.feedbackTime, "Input feedback time:\n");}
 void setG(){setRamVar(ram.lockbox.G, "Input G:\n");}
 void setP(){setRamVar(ram.lockbox.P, "Input P:\n");}
 void setI(){setRamVar(ram.lockbox.I, "Input I (1/s):\n"); ram.lockbox.integral = 0;}
-void setSetpoint(){setRamVar(ram.lockbox.setpoint, "Input setpoint (C):\n");};
+void setSetpoint(){setRamVar(ram.lockbox.setpoint, "Input setpoint (V):\n");};
 void setOutputOffset(){setRamVar(ram.lockbox.outputOffset, "Input outputOffset:\n");}
 
 void switchFeedback(){
