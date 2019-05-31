@@ -8,10 +8,14 @@
 
 namespace temperatureController {
 
+	class ControllerInterface;
 	class TemperatureController;
 	class Thermistor;
 	class TEC;
 	class PIcontroller;
+
+	class ControllerWithInterface : public GeneralController;  
+	class TemperatureControllerWithInterface: public TemperatureController;
 
 	class PIcontroller{
 		public:
@@ -97,7 +101,7 @@ namespace temperatureController {
 		float feedbackTime;
 		float averageReading;
 		unsigned int averageNumber;
-
+ 
 		TemperatureController();
 		TemperatureController(String name); //pass backup name 
 		~TemperatureController(){}
@@ -124,6 +128,138 @@ namespace temperatureController {
 	public:
 		float lock();
 	};
+
+	class ControllerWithInterface : public GeneralController{
+	public:
+		menu settings;
+
+		void initSettings(String title){
+			settings.loop = false;	//same as for settings
+			settings.defineTitle(title);
+			settings.defineMenuItems(ramMenu::settingsItems,RAMPROGS);
+			settings.defineMenuProgs(ramMenu::settingsProgs,RAMPROGS);
+		}
+
+		void setSaveVar(float& x, String prompt);
+		void setVar(float& x, String prompt)
+
+		void setFeedbackTime(){setSaveVar(feedbackTime, "Input feedback time:\n");}
+		void setG(){setSaveVar(lockbox.G, "Input G:\n");}
+		void setP(){setSaveVar(lockbox.P, "Input P:\n");}
+		void setI(){setSaveVar(lockbox.I, "Input I (1/s):\n"); lockbox.integral = 0;}
+		void setSetpoint(){setSaveVar(lockbox.setpoint, "Input setpoint (V):\n");};
+		void setOutputOffset(){setSaveVar(lockbox.outputOffset, "Input outputOffset:\n");}
+		void switchFeedback(){lockbox.G *= -1;saveConfig(RAMBAK);}
+		void toggleFeedback(){lockbox.locked = !lockbox.locked;}
+		void zeroIntegrator(){lockbox.integral = 0;saveConfig(RAMBAK);}
+		void printSettings();
+		void copyOutputToRAMfromTEMP(){lockbox.outputOffset = eom.lockbox.output;}
+
+		const String settingsItems[RAMPROGS]   = {
+			"Set Temp. Out to RAM OutOffs.",
+			"Print settings",
+			"Set setpoint",
+			"Switch feedback sign",
+			"Set the total gain G", 
+			"Set proportional gain P", 
+			"Set integral gain I", 
+			"Set output offset",
+			"Zero the integrator",
+			"Set feedbackTime"
+			};
+
+		const void (*settingsProgs[RAMPROGS])()= {
+			copyOutputToRAMfromTEMP,
+			printSettings,
+			setSetpoint, 
+			switchFeedback, 
+			setG, 
+			setP, 
+			setI, 
+			setOutputOffset,
+			zeroIntegrator,
+			setFeedbackTime
+		};
+
+	};
+
+	class TemperatureControllerWithInterface : public TemperatureController{
+	public:
+		void setSaveVar(float& x, String prompt){
+			char buff[50];
+			sprintf(buff, "Current value is:\n%e", x);
+			lcd.println(buff);
+			String temp = numInput(prompt);
+			if(temp.length() == 0){
+				lcd.println("No change made.");
+				delay(500);
+				return;
+			}
+
+			x = temp.toFloat();
+			saveConfig(EOMBAK);
+		}
+
+		void setVar(float& x, String prompt){
+			char buff[50];
+			sprintf(buff, "Current value is: %e", x);
+			lcd.println(buff);
+			String temp = numInput(prompt);
+			if(temp.length() == 0){
+				lcd.println("No change made.");
+				delay(500);
+				return;
+			}
+
+			x = temp.toFloat();
+		}
+
+		void setFeedbackTime(){setSaveVar(feedbackTime, "Input feedback time:\n");}
+		void setG(){setSaveVar(lockbox.G, "Input G:\n");}
+		void setP(){setSaveVar(lockbox.P, "Input P:\n");}
+		void setI(){setSaveVar(lockbox.I, "Input I (1/s):\n"); lockbox.integral = 0;}
+		void setSetpoint(){setSaveVar(lockbox.setpoint, "Input setpoint (C):\n");};
+		void setOutputOffset(){setSaveVar(lockbox.outputOffset, "Input outputOffset:\n");}
+		void switchFeedback(){lockbox.G *= -1;saveConfig(EOMBAK);}
+		void toggleFeedback(){lockbox.locked = !lockbox.locked;}
+		void zeroIntegrator(){lockbox.integral = 0;saveConfig(EOMBAK);}
+		void printFreeRam(){lcd.println("Free RAM is: ");lcd.println(freeMemory());wait();}
+		void printSettings(){
+			char buff[200];
+			sprintf(buff, 
+				"Total Gain: %.3e\nProportional: %.3f\nIntegral Gain: %.3e\nOutput Offset: %.3f\nSetpoint (C): %.3f\n",
+				lockbox.G, lockbox.P,
+				lockbox.I, lockbox.outputOffset,
+				lockbox.setpoint);
+			lcd.println(buff);
+			wait();
+		}
+
+		const String settingsItems[EOMPROGS]   = {
+			"Print settings",
+			"Set setpoint",
+			"Switch feedback sign",
+			"Set the total gain G", 
+			"Set proportional gain P", 
+			"Set integral gain I", 
+			"Set output offset",
+			"Zero the integrator",
+			"Set feedbackTime"
+			};
+
+		const void (*settingsProgs[EOMPROGS])()= {
+			printSettings,
+			setSetpoint, 
+			switchFeedback, 
+			setG, 
+			setP, 
+			setI, 
+			setOutputOffset,
+			zeroIntegrator,
+			setFeedbackTime
+		};
+
+	}
 
 }
 
