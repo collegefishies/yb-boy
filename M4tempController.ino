@@ -53,7 +53,7 @@
 		
 
 	//temperature controllers and time keeper objects
-		RTC_Millis rtc;
+		//RTC_Millis rtc;
 		temperatureController::GeneralController ram;
 		temperatureController::TemperatureController eom;
 
