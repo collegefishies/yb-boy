@@ -15,10 +15,11 @@ namespace temperatureController {
 
 	class PIcontroller{
 		public:
-			float G;     	//total gain
-			float P, I;  	//p,i,d gains
-			float output;	//output value
-			float outputOffset;
+			float G;           	//total gain
+			float P, I;        	//p,i,d gains
+			float output;      	//output value
+			float outputOffset;	//output offset
+			float history;     	//float that allows for continuous drive changes.
 			float input;
 			float setpoint;
 			float error;
@@ -27,7 +28,7 @@ namespace temperatureController {
 
 			bool locked;
 			
-			void init(){G = P = I = output = input = setpoint = error = integral = dt = locked = 0;};
+			void init(){G = P = I = output = input = history = setpoint = error = integral = dt = locked = 0;};
 			void feedback();	//call this loop repeatedly
 	};
 

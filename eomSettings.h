@@ -6,7 +6,7 @@ extern temperatureController::TemperatureController eom;
 
 namespace eomMenu {
 
-void setEomVar(float& x, String prompt){
+bool setEomVar(float& x, String prompt){
 	char buff[50];
 	sprintf(buff, "Current value is:\n%e", x);
 	lcd.println(buff);
@@ -14,11 +14,12 @@ void setEomVar(float& x, String prompt){
 	if(temp.length() == 0){
 		lcd.println("No change made.");
 		delay(500);
-		return;
+		return false;
 	}
 
 	x = temp.toFloat();
 	eom.saveConfig(EOMBAK);
+	return true;
 }
 
 void setVar(float& x, String prompt){
@@ -36,9 +37,23 @@ void setVar(float& x, String prompt){
 }
 
 void setFeedbackTime(){setEomVar(eom.feedbackTime, "Input feedback time:\n");}
-void setG(){setEomVar(eom.lockbox.G, "Input G:\n");}
+void setG(){
+	float oldG = eom.lockbox.G;
+	bool changed = setEomVar(eom.lockbox.G, "Input G:\n");
+	if(changed){
+		eom.lockbox.history += -oldG*eom.lockbox.I*eom.lockbox.integral;
+		eom.lockbox.integral = 0;
+	}
+}
 void setP(){setEomVar(eom.lockbox.P, "Input P:\n");}
-void setI(){setEomVar(eom.lockbox.I, "Input I (1/s):\n"); eom.lockbox.integral = 0;}
+void setI(){
+	float oldI = eom.lockbox.I;
+	bool changed = setEomVar(eom.lockbox.I, "Input I (1/s):\n"); 
+	if(changed){
+		eom.lockbox.history += -eom.lockbox.G*oldI*eom.lockbox.integral;
+		eom.lockbox.integral = 0;
+	}
+}
 void setSetpoint(){setEomVar(eom.lockbox.setpoint, "Input setpoint (C):\n");};
 void setOutputOffset(){setEomVar(eom.lockbox.outputOffset, "Input outputOffset:\n");}
 
@@ -54,6 +69,7 @@ void toggleFeedback(){
 
 void zeroIntegrator(){
 	eom.lockbox.integral = 0;
+	eom.lockbox.history = 0;
 	eom.saveConfig(EOMBAK);
 }
 
