@@ -253,7 +253,7 @@ bool TemperatureController::saveConfig(String fname){
 		error = input - setpoint;
 		if(locked){
 			integral += dt*error;
-			output = -G*(P*error + I*integral) + outputOffset; //note the negative feedback!
+			output = -G*(P*error + I*integral) + outputOffset + history; //note the negative feedback!
 		}
 	}
 
