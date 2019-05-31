@@ -41,7 +41,39 @@ float GeneralController::lock(){
 		return NAN;
 	}
 }
+float GeneralController::windowLock(float threshold){
+	//measure continously
+	float tempVoltage = thermistor.getAverageVoltage(averageNumber,feedbackTime*1000);;
 
+	//only update class variable iff the measurement is real.
+	if(!isnan(tempVoltage)){
+		averageReading = tempVoltage;
+	}
+
+
+	if((micros() - lastLockTime)/1.e6 >= feedbackTime){
+		if(isnan(averageReading)){
+			return NAN;
+		}
+
+		lockbox.dt = (micros() - lastLockTime)/1.e6;
+		lastLockTime = micros();
+
+		//feed to PI
+		lockbox.input = averageReading;
+
+		//feedback
+		if(abs(lockbox.input - lockbox.setpoint) > threshold){
+			lockbox.feedback();
+			tec.setVoltage(lockbox.output);
+		}
+
+		return averageReading;
+	} else {
+		//return nans if feedback didn't occur.
+		return NAN;
+	}
+}
 /*
  *  Temperature Controller
  */

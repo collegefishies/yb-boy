@@ -253,7 +253,7 @@ void loop() {
 			avgTemp = eom.lock();	//eom.lock() measures for a eom.feedbackTime then returns the average
 			                     	//temperature	 
 		} else if (ram.lockbox.locked && digitalRead(SWITCHPIN)) {
-			ramVoltage = ram.lock();
+			ramVoltage = ram.windowLock(0.25);
 			avgTemp = eom.thermistor.getAverageTemperature(eom.averageNumber,3000); //average for three seconds.
 
 			//switch to temperature locking if we've strayed too far. clearly ram lock isn't fedback properly

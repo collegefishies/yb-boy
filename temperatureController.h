@@ -122,7 +122,8 @@ namespace temperatureController {
 
 	class GeneralController : public TemperatureController{
 	public:
-		float lock();
+		float lock();                     	//general purpose lock program as you want.
+		float windowLock(float threshold);	//modified lock for RAM control.
 	};
 
 }
