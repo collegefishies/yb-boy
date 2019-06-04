@@ -7,7 +7,7 @@ extern temperatureController::TemperatureController eom;
 
 namespace ramMenu {
 
-bool setRamVar(float& x, String prompt){
+void setRamVar(float& x, String prompt){
 	char buff[50];
 	sprintf(buff, "Current value is:\n%e", x);
 	lcd.println(buff);
@@ -15,12 +15,11 @@ bool setRamVar(float& x, String prompt){
 	if(temp.length() == 0){
 		lcd.println("No change made.");
 		delay(500);
-		return false;
+		return;
 	}
 
 	x = temp.toFloat();
 	ram.saveConfig(RAMBAK);
-	return true;
 }
 
 void setVar(float& x, String prompt){
@@ -38,23 +37,9 @@ void setVar(float& x, String prompt){
 }
 
 void setFeedbackTime(){setRamVar(ram.feedbackTime, "Input feedback time:\n");}
-void setG(){
-	float oldG = ram.lockbox.G;
-	bool changed = setRamVar(ram.lockbox.G, "Input G:\n");
-	if(changed){
-		ram.lockbox.history += -oldG*ram.lockbox.I*ram.lockbox.integral;
-		ram.lockbox.integral = 0;
-	}
-}
+void setG(){setRamVar(ram.lockbox.G, "Input G:\n");}
 void setP(){setRamVar(ram.lockbox.P, "Input P:\n");}
-void setI(){
-	float oldI = eom.lockbox.I;
-	bool changed = setRamVar(ram.lockbox.I, "Input I (1/s):\n");
-	if(changed){
-		ram.lockbox.history += -ram.lockbox.G*oldI*ram.lockbox.integral;
-		ram.lockbox.integral = 0;
-	}
-}
+void setI(){setRamVar(ram.lockbox.I, "Input I (1/s):\n"); ram.lockbox.integral = 0;}
 void setSetpoint(){setRamVar(ram.lockbox.setpoint, "Input setpoint (V):\n");};
 void setOutputOffset(){setRamVar(ram.lockbox.outputOffset, "Input outputOffset:\n");}
 
@@ -63,9 +48,13 @@ void switchFeedback(){
 	ram.saveConfig(RAMBAK);
 }
 
+
+void toggleFeedback(){
+	ram.lockbox.locked = !ram.lockbox.locked;
+}
+
 void zeroIntegrator(){
 	ram.lockbox.integral = 0;
-	ram.lockbox.history = 0;
 	ram.saveConfig(RAMBAK);
 }
 
