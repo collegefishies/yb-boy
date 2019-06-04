@@ -53,7 +53,7 @@
 		
 
 	//temperature controllers and time keeper objects
-		RTC_Millis rtc;
+		//RTC_Millis rtc;
 		temperatureController::GeneralController ram;
 		temperatureController::TemperatureController eom;
 
@@ -251,18 +251,29 @@ void loop() {
 		//either lock the eom or ram depending on what we want.
 		if( eom.lockbox.locked && digitalRead(SWITCHPIN)){
 			avgTemp = eom.lock();	//eom.lock() measures for a eom.feedbackTime then returns the average
-			                     	//temperature	 
+			                     	//temperature
+			
+			ram.lastLockTime = eom.lastLockTime;	//set both locks to have equal last lock time so they don't
+			                                    	//integrate massive (false) errors when switching between locks.
 		} else if (ram.lockbox.locked && digitalRead(SWITCHPIN)) {
 			ramVoltage = ram.lock();
+			eom.lastLockTime = ram.lastLockTime;                            	//set both locks to have equal last lock time so they don't
+			                                                                	//integrate massive (false) errors when switching between locks.
+			eom.lockbox.history = - eom.lockbox.output + ram.lockbox.output;	//make outputs continous when you switch drives.
+
 			avgTemp = eom.thermistor.getAverageTemperature(eom.averageNumber,3000); //average for three seconds.
 
 			//switch to temperature locking if we've strayed too far. clearly ram lock isn't fedback properly
 			if(abs(avgTemp - eom.lockbox.setpoint) > 1){
 				activateTempFeedback();
 			}
+
+
 		} else if (!digitalRead(SWITCHPIN)){
 			//just log temperature if something else is controlling our eom temperature.
 			avgTemp = eom.thermistor.getAverageTemperature(eom.averageNumber,3000);
+
+			ram.lastLockTime = eom.lastLockTime = micros();	//say we haven't locked it, while we've been logging.
 		}
 
 
