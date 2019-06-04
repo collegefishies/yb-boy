@@ -256,7 +256,13 @@ void loop() {
 			ram.lastLockTime = eom.lastLockTime;	//set both locks to have equal last lock time so they don't
 			                                    	//integrate massive (false) errors when switching between locks.
 
-			ram.lockbox.history = - ram.lockbox.output + eom.lockbox.output;	//make outputs continous when you switch drives.
+			ram.lockbox.history = 
+				-( 
+					-ram.lockbox.G*
+					(ram.lockbox.P*(ram.lockbox.input - ram.lockbox.setpoint) + ram.lockbox.I*ram.lockbox.integral)
+					+ ram.lockbox.outputOffset
+				)
+				+ eom.lockbox.output;	//make outputs continous when you switch drives.
 
 		} else if (ram.lockbox.locked && digitalRead(SWITCHPIN)) {
 			ramVoltage = ram.lock();
