@@ -50,7 +50,9 @@ void printHeader();
 
 /******* begin main ************/
 /******* begin main ************/
-/******* begin main ************/		
+/******* begin main ************/
+
+File datalog;		
 
 void setup() {
 	lcd_initialize();
@@ -71,6 +73,32 @@ void setup() {
 	/******* Load SD Card and print connection nfo! ************/
 	if(SD.begin(SD_CS)){
 		lcd.println("SD card connected!");
+
+		if (SD.exists("tempHumi.txt")) {
+			lcd.println("tempHumi.txt exists.");
+		} else {
+			lcd.println("No tempHumi.txt found. Creating...");
+
+			datalog = SD.open("tempHumi.txt",FILE_WRITE);
+			datalog.write("Date (MM/DD/YYYY) & Time (HH:MM:SS)\t Temperature (C)\t Humidity (%)\n");
+			datalog.close();
+		}
+
+		#ifdef DEBUG
+			//print contents of txt file.
+			datalog = SD.open("tempHumi.txt", FILE_READ);
+			if (datalog){
+				Serial.println("Reading tempHumi.txt:");
+				while(datalog.available()){
+					Serial.write(datalog.read());
+				}
+
+				datalog.close();
+			} else {
+				Serial.println("Error opening tempHumi.txt");
+			}
+		#endif
+
 	} else {
 		lcd.println("SD card failed...");
 	}
@@ -139,6 +167,7 @@ void loop() {
 	
 	//define graph objects, and their plotting area
 		graph humidityPlot(0,3*CHARH,lcd.width(),lcd.height());
+		graph temperaturePlot(0,3*CHARH,lcd.width(),lcd.height());
 		int colors[8] = {ST7735_BLUE,ST7735_RED, ST7735_ORANGE, ST7735_YELLOW,ST7735_GREEN, ST7735_BLUE,0xC159,ST7735_WHITE}; //hex is purple
 		//first color is grid
 	//temperature plot settings
@@ -148,6 +177,11 @@ void loop() {
 		humidityPlot.setYtics(3);
 		humidityPlot.setXlims(0,1440);
 		humidityPlot.setYlims(0,100);
+
+		temperaturePlot.setXtics(5);
+		temperaturePlot.setYtics(3);
+		temperaturePlot.setXlims(0,1440);
+		temperaturePlot.setYlims(0,100);
 		
 		humidityPlot.makeAxes();
 		humidityPlot.makeGrid();
@@ -157,7 +191,7 @@ void loop() {
 		int t = 0;	//index for temperature plotting
 
 	while(true){
-		delay(100);
+		delay(1000);
 		//read sensor measurements & log
 		DateTime now = rtc.now();
 			//remember daysOfTheWeek[now.dayOfTheWeek()]
@@ -178,21 +212,68 @@ void loop() {
 			Serial.print("Today's Day Number is "); Serial.println(now.dayOfTheWeek());
 		#endif
 		
-		float buffer[DATAPOINTS] = {0};
+		float humidityBuffer[DATAPOINTS] = {0};
+		float temperatureBuffer[DATAPOINTS] = {0};
 		//plot humidity and temperature on one plot over the last three days
 		for (int i = 0; i < 7; ++i)
 		{	
 		 	for (int j = 0; j < DATAPOINTS; ++j)
 		 	{
-		 		buffer[j] = lastHumidity[i][j];
+		 		humidityBuffer[j] = lastHumidity[i][j];
+		 		temperatureBuffer[j] = lastTemperature[i][j];
 		 		times[j] = 10*j;
 		 	}
-		 	humidityPlot.plotData(i,times, buffer, DATAPOINTS);
+
+			humidityPlot.plotData(i,times, humidityBuffer, DATAPOINTS);
+			temperaturePlot.plotData(i,times,temperatureBuffer, DATAPOINTS);
 		}
+
+		temperaturePlot.setColors(colors, 8);
 		humidityPlot.setColors(colors, 8);
 		humidityPlot.drawGraph();
+		temperaturePlot.drawGraph();
+
 		//save data to externalfile
+		if(SD.exists("tempHumi.txt")){
+			//open file
+			datalog = SD.open("tempHumi.txt", FILE_WRITE);
+
+			//write down data
+			char stringBuffer[100] = {'0'};
+
+			sprintf(stringBuffer,"%02i/%02i/%4i\t%02i:%02i:%02i\t%f\t%f\n", now.month(), now.day(), now.year(), now.hour(), now.minute(), now.second(),temp, humid);
+			datalog.write(stringBuffer);
+
+			//date & time
+			// datalog.write(int(now.month()));
+			// datalog.write("/");
+			// datalog.write(int(now.day()));
+			// datalog.write("/");
+			// datalog.write(int(now.year()));
+			// datalog.write("  ");
+			// datalog.write(int(now.hour()));
+			// datalog.write(":");
+			// datalog.write(int(now.minute()));
+			// datalog.write(":");
+			// datalog.write(int(now.second()));
+			// datalog.write("\t");
+			
+			//temperature
+			// datalog.write(temp);
+			// datalog.write("\t");
+
+			//humidity
+			// datalog.write(humid);
+
+			//endline
+			// datalog.write("\n");
+
+			//close file
+			datalog.close(); 
+		}
+
 	}
+
 }
 
 
