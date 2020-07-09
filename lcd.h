@@ -6,10 +6,10 @@
 #include <SPI.h>
 
 //pinout
-#define TFT_CS 0
-#define TFT_DC 4
-#define SD_CS  1
-#define TFT_RST -1
+#define TFT_CS 6
+#define TFT_DC 10
+#define SD_CS  9
+#define TFT_RST 11
 
 // LCD Global Variables
 #define TFT_WIDTH 80
