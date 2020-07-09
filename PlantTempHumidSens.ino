@@ -18,7 +18,7 @@
 #include "Adafruit_Si7021.h"
 #include "RTClib.h"
  
-#define DEBUG
+// #define DEBUG
 
 //utilities
 /*
@@ -191,7 +191,6 @@ void loop() {
 		int t = 0;	//index for temperature plotting
 
 	while(true){
-		delay(1000);
 		//read sensor measurements & log
 		DateTime now = rtc.now();
 			//remember daysOfTheWeek[now.dayOfTheWeek()]
@@ -244,33 +243,10 @@ void loop() {
 			sprintf(stringBuffer,"%02i/%02i/%4i\t%02i:%02i:%02i\t%f\t%f\n", now.month(), now.day(), now.year(), now.hour(), now.minute(), now.second(),temp, humid);
 			datalog.write(stringBuffer);
 
-			//date & time
-			// datalog.write(int(now.month()));
-			// datalog.write("/");
-			// datalog.write(int(now.day()));
-			// datalog.write("/");
-			// datalog.write(int(now.year()));
-			// datalog.write("  ");
-			// datalog.write(int(now.hour()));
-			// datalog.write(":");
-			// datalog.write(int(now.minute()));
-			// datalog.write(":");
-			// datalog.write(int(now.second()));
-			// datalog.write("\t");
-			
-			//temperature
-			// datalog.write(temp);
-			// datalog.write("\t");
-
-			//humidity
-			// datalog.write(humid);
-
-			//endline
-			// datalog.write("\n");
-
 			//close file
 			datalog.close(); 
 		}
+		delay(10000);
 
 	}
 
