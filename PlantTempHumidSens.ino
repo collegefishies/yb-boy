@@ -255,6 +255,8 @@ void loop() {
 
 /******* Helper Functions  ************/
 	void printHeader(){
+		int colors[8] = {ST7735_BLUE,ST7735_RED, ST7735_ORANGE, ST7735_YELLOW,ST7735_GREEN, ST7735_BLUE,0xC159,ST7735_WHITE}; //hex is purple
+		
 		/*
 		 * Print pretty info so people know what this box is for.
 		 * And some key press info.
@@ -264,6 +266,14 @@ void loop() {
 		lcd.setFont(&Picopixel);
 		lcd.setTextColor(ST7735_GREEN);
 		lcd.println("   Plant Temperature and Humidity Sensor");
+		//print date color code.
+		lcd.print("Datecode: ");
+		for (int i = 0; i < 7; ++i)
+		{
+			lcd.setTextColor(colors[i+1]); //first color is graph color
+			lcd.print(daysOfTheWeek[i][0]);
+		}
+
 		lcd.setTextColor(ST7735_WHITE);
 		lcd.setFont(oldFont);
 	}
