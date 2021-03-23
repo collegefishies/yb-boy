@@ -19,6 +19,8 @@ The parameters can be found in the "temperatureController.h" file.
 ## RAM Lock Mode
 When the RAM error signal is fed into the Yb-Boy one can also then just reuse the TemperatureLock mode logic, and just change the error signal input. That's what's done.
 
+It needs to only be activated in the "Settings" Menu. If the RAM lock falls out of lock for whatever reason there is a safety trigger that will fall back to temperature control mode when the temperature deviates too much.
+
 I believe that part of the code is stored in "eomController.h".
 
 ## SWITCHPIN
