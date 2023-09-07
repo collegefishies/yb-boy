@@ -2,6 +2,10 @@
 Code for running the YbBoy. A small lab interfacing tool.
 
 For information on this project and documentation check the [wiki](https://github.com/collegefishies/yb-boy/wiki)!
+<div style="text-align:center;">
+<img src="imgs/code/IMG_0987.jpeg" alt="Yb Boy" height="400"/>
+</div>
+
 
 # Intended Usage
 
